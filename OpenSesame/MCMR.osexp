@@ -1,0 +1,785 @@
+---
+API: 2.1
+OpenSesame: 3.3.3
+Platform: nt
+---
+set width 1920
+set uniform_coordinates yes
+set title "Mental Rotation with 3 figures"
+set subject_parity even
+set subject_nr 0
+set start experiment
+set sound_sample_size -16
+set sound_freq 48000
+set sound_channels 2
+set sound_buf_size 1024
+set sampler_backend legacy
+set round_decimals 2
+set mouse_backend legacy
+set keyboard_backend legacy
+set height 1080
+set fullscreen no
+set form_clicks no
+set foreground white
+set font_underline no
+set font_size 24
+set font_italic no
+set font_family sans
+set font_bold no
+set experiment_path "C:\\Users\\LocalAdmin\\Documents\\Programmierung\\R\\MCMR\\OpenSesame"
+set disable_garbage_collection yes
+set description "The main experiment item"
+set coordinates uniform
+set compensation 0
+set color_backend legacy
+set clock_backend legacy
+set canvas_backend legacy
+set background "#000000"
+
+define sequence BlockSequence
+	set flush_keyboard yes
+	set description "Führt mehrere Items nacheinander aus"
+	run ReadInstructions always
+	run ShowInstructionsFixedDuration always
+	run ShowInstructions always
+	run setTime always
+	run ShowStimuli always
+
+define loop Blocks
+	set source_file ""
+	set source table
+	set repeat 1
+	set order sequential
+	set description "Führt wiederholt ein anderes Item aus"
+	set cycles 2
+	set continuous no
+	set break_if_on_first yes
+	set break_if never
+	setcycle 0 aaBlock practice
+	setcycle 0 instructions "InstructionsPractice.txt"
+	setcycle 0 maxDurationMins 0
+	setcycle 0 feedbackDuration 500
+	setcycle 0 feedback 1
+	setcycle 1 aaBlock main
+	setcycle 1 instructions "Instructions.txt"
+	setcycle 1 maxDurationMins 10
+	setcycle 1 feedbackDuration 500
+	setcycle 1 feedback 0
+	run BlockSequence
+
+define inline_script CreateID
+	set description "Executes Python code"
+	___run__
+	if(var.customID==1):
+		#ask for ID
+		#Create a form
+		form = Form(
+			cols=[1], rows=[2,1],
+			margins=(50,50,50,50), spacing=25
+		)
+		#show form with question and text input
+		form.set_widget(Label(text=var.IDprompt, center=False), (0,0))
+		textInput=TextInput(return_accepts=True, stub=u'ID')
+		form.set_widget(textInput, (0,1))
+		var.aaID=form._exec(textInput)
+		#print(var.aaID)
+	else:
+		import time
+		var.aaID=time.time()
+	__end__
+	set _prepare ""
+
+define sketchpad Fixation
+	set duration 0
+	set description "Präsentiert Stimuli"
+	draw textline center=1 color=white font_bold=no font_family=sans font_italic=no font_size=40 html=yes show_if=always text="[fixation]" x=0 y=0 z_index=0
+
+define inline_script GetClicked
+	set description "Executes Python code"
+	___run__
+	#check which item has been clicked and mark item
+	#or if next button has been clicked
+	#items should not be overlapping
+	if u'target0' in var.cursor_roi:
+		var.show0=1-var.show0
+		var.show0r=var.show0*var.feedback
+		var.show0g=var.show0*var.feedback*var.correct0
+	elif u'target1' in var.cursor_roi:
+		var.show1=1-var.show1
+		var.show1r=var.show1*var.feedback
+		var.show1g=var.show1*var.feedback*var.correct1
+	elif u'target2' in var.cursor_roi:
+		var.show2=1-var.show2
+		var.show2r=var.show2*var.feedback
+		var.show2g=var.show2*var.feedback*var.correct2
+	elif u'target3' in var.cursor_roi:
+		var.show3=1-var.show3
+		var.show3r=var.show3*var.feedback
+		var.show3g=var.show3*var.feedback*var.correct3
+	elif u'target4' in var.cursor_roi:
+		var.show4=1-var.show4
+		var.show4r=var.show4*var.feedback
+		var.show4g=var.show4*var.feedback*var.correct4
+	elif u'target5' in var.cursor_roi:
+		var.show5=1-var.show5
+		var.show5r=var.show5*var.feedback
+		var.show5g=var.show5*var.feedback*var.correct5
+	elif u'target6' in var.cursor_roi:
+		var.show6=1-var.show6
+		var.show6r=var.show6*var.feedback
+		var.show6g=var.show6*var.feedback*var.correct6
+	elif u'target7' in var.cursor_roi:
+		var.show7=1-var.show7
+		var.show7r=var.show7*var.feedback
+		var.show7g=var.show7*var.feedback*var.correct7
+	elif u'next' in var.cursor_roi:
+		var.nextButton=1
+	__end__
+	set _prepare ""
+
+define inline_script GetResults
+	set description "Executes Python code"
+	___run__
+	#parameters for logging
+	#stimuli which should have been selected
+	var.correctStimuli=[var.correct0,var.correct1,var.correct2,var.correct3, var.correct4,var.correct5,var.correct6,var.correct7]
+	#selected stimuli
+	var.answers=[var.show0,var.show1,var.show2,var.show3, var.show4,var.show5,var.show6,var.show7]
+	#var.correctAnswers=[int(var.correctStimuli[i]==var.answers[i]) for i in range(var.nStimuli)]
+	#var.sumCorrect=sum(var.correctAnswers)
+	#print(var.sumCorrect)
+	__end__
+	set _prepare ""
+
+define notepad License
+	__note__
+	### Mental Rotation experiment according to Jost & Jansen (2019)
+	#     Copyright (C) 2019  Leonardo Jost
+	# 
+	# This program is free software: you can redistribute it and/or modify
+	# it under the terms of the GNU General Public License as published by
+	# the Free Software Foundation, either version 3 of the License, or
+	# (at your option) any later version.
+	# 
+	# This program is distributed in the hope that it will be useful,
+	# but WITHOUT ANY WARRANTY; without even the implied warranty of
+	# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	# GNU General Public License for more details.
+	# 
+	# You should have received a copy of the GNU General Public License
+	# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+	__end__
+	set description "A simple notepad to document your experiment. This plug-in does nothing."
+
+define sequence QuestionSequence
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+	run prepareQuestion always
+	run ShowForm always
+	run questionaireLogger always
+
+define sequence Questionaire
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+	run ReadQuestions always
+	run QuestionsLoop always
+
+define loop QuestionsLoop
+	set source_file ""
+	set source table
+	set repeat "[numberOfQuestions]"
+	set order random
+	set description "Repeatedly runs another item"
+	set cycles 1
+	set continuous no
+	set break_if_on_first no
+	set break_if never
+	setcycle 0 empty_column ""
+	run QuestionSequence
+
+define inline_script ReadInstructions
+	set description "Executes Python code"
+	set _run ""
+	___prepare__
+	with open(pool[var.instructions],encoding="utf-8-sig") as file:
+		instructionsText = file.read()
+	var.instructionsText=instructionsText.replace(u'F1',var.feedbackCorrect).replace(u'F2',var.feedbackWrong).replace(u'FX',var.fixation)
+	var.instructionsText1=var.instructionsText.split(u'(Continue)')[0]
+	#replace part after (Continue) by empty lines to keep spacing/positioning
+	#empty lines are trimmed rigorously (even non-breaking spaces) so dots are displyed
+	#pixelwise positioning of text is another option but difficult as converting fontsize to px is not uniform
+	if len(var.instructionsText.split(u'(Continue)'))>1:
+		continueLines=var.instructionsText.split(u'(Continue)')[1].count(u'\n')+1
+		var.instructionsText1+=u'.\n'*continueLines
+	#remove (Continue)
+	var.instructionsText=var.instructionsText.replace(u'(Continue)',u'')
+	__end__
+
+define inline_script ReadQuestions
+	set description "Executes Python code"
+	___run__
+	import string
+	with open(pool[var.questionaireFile], encoding="utf-8-sig") as file:
+		var.questionsText = file.readlines()
+	var.numberOfQuestions=len(var.questionsText)
+	var.questionNumber=0
+	var.aaBlock=u'questionaire'
+	var.answerList=list()
+	var.showQuestion=1  #true is converted to yes, use 0/1 instead
+	var.form_response=u''
+	__end__
+	set _prepare ""
+
+define inline_script SetClicked
+	set description "Executes Python code"
+	set _run ""
+	___prepare__
+	import random
+	#show borders if clicked
+	#all as variables because stimulus presentation cannot handle array variables?
+	var.show0=0
+	var.show1=0
+	var.show2=0
+	var.show3=0
+	var.show4=0
+	var.show5=0
+	var.show6=0
+	var.show7=0
+	#show red border for wrong feedback
+	var.show0r=0
+	var.show1r=0
+	var.show2r=0
+	var.show3r=0
+	var.show4r=0
+	var.show5r=0
+	var.show6r=0
+	var.show7r=0
+	#show green border for correct feedback
+	var.show0g=0
+	var.show1g=0
+	var.show2g=0
+	var.show3g=0
+	var.show4g=0
+	var.show5g=0
+	var.show6g=0
+	var.show7g=0
+	#set nextButton to not clicked
+	var.nextButton=0
+	
+	var.nStimuli=random.choice([2,4,8])
+	if var.nStimuli<5:
+	    var.yOffset=0
+	else:
+	    var.yOffset=var.distance/2
+	var.yBorderTop=var.yB-var.yOffset
+	var.yBorderBottom=var.yB+var.yOffset 
+	var.error=u''#str(var.nStimuli)+u' stimuli'
+	__end__
+
+define inline_script SetNamesAndResponses
+	set description "Executes Python code"
+	set _run ""
+	___prepare__
+	import random
+	#load next stimuli from stimulusList
+	var.model,var.angle,var.orientation,var.axis=var.stimulusList[var.stimulusNumber]
+	var.stimulusNumber=var.stimulusNumber+1
+	if var.angle in [0,90,180,270]:
+		#randomize orientation of of figures
+		var.orientationsArray=var.orientations*(var.nStimuli//2)
+		random.shuffle(var.orientationsArray)
+		#increase length to 8, exceeding values are not used as stimuli are not shown
+		var.orientationsArray=var.orientationsArray*(8//var.nStimuli)
+		#get random angles such that the same combination of angles and orientation is not repeated
+		#do not use angle 0
+		anglesArray1=var.angles.copy()
+		anglesArray1.remove(var.angle)
+		random.shuffle(anglesArray1)
+		anglesArray2=anglesArray1.copy()
+		random.shuffle(anglesArray2)
+		var.anglesArray=[]
+		j=0
+		for i in range(8):
+			if var.orientationsArray[i]==var.orientation:
+				var.anglesArray=var.anglesArray+[anglesArray1[j]]
+				j=j+1
+			else:
+				var.anglesArray=var.anglesArray+[anglesArray2[i-j]]
+	else:
+		#always show in pairwise switching order
+		#set pairwise mirrored angles
+		orientationsCopy=var.orientations.copy()
+		anglesArray1=[0,0,90,90,180,180,270,270]
+		var.orientationsArray=[]
+		var.anglesArray=[]
+		anglesOrder=[0,1,2,3]
+		random.shuffle(anglesOrder)
+		for i in range(4):
+			random.shuffle(orientationsCopy)
+			var.orientationsArray=var.orientationsArray+orientationsCopy
+			var.anglesArray=var.anglesArray+[anglesArray1[2*anglesOrder[i]],anglesArray1[2*anglesOrder[i]+1]]
+		#switch rotation direction for one orientation such that they appear mirrored
+		for i in range(len(var.orientationsArray)):
+			if var.orientationsArray[i]==var.orientation:
+				var.anglesArray[i]=(360-var.anglesArray[i])%360
+		
+	#set filenames of stimuli
+	var.target0File=getStimulusname(var.model,var.anglesArray[0],var.orientationsArray[0],var.axis)
+	var.target1File=getStimulusname(var.model,var.anglesArray[1],var.orientationsArray[1],var.axis)
+	var.target2File=getStimulusname(var.model,var.anglesArray[2],var.orientationsArray[2],var.axis)
+	var.target3File=getStimulusname(var.model,var.anglesArray[3],var.orientationsArray[3],var.axis)
+	var.target4File=getStimulusname(var.model,var.anglesArray[4],var.orientationsArray[4],var.axis)
+	var.target5File=getStimulusname(var.model,var.anglesArray[5],var.orientationsArray[5],var.axis)
+	var.target6File=getStimulusname(var.model,var.anglesArray[6],var.orientationsArray[6],var.axis)
+	var.target7File=getStimulusname(var.model,var.anglesArray[7],var.orientationsArray[7],var.axis)
+	var.comparisonFile=getStimulusname(var.model,var.angle,var.orientation,var.axis)
+	#set correct responses
+	var.correct0=int(var.orientationsArray[0]==var.orientation)
+	var.correct1=int(var.orientationsArray[1]==var.orientation)
+	var.correct2=int(var.orientationsArray[2]==var.orientation)
+	var.correct3=int(var.orientationsArray[3]==var.orientation)
+	var.correct4=int(var.orientationsArray[4]==var.orientation)
+	var.correct5=int(var.orientationsArray[5]==var.orientation)
+	var.correct6=int(var.orientationsArray[6]==var.orientation)
+	var.correct7=int(var.orientationsArray[7]==var.orientation)
+	__end__
+
+define inline_script ShowForm
+	set description "Executes Python code"
+	___run__
+	if(var.showQuestion==1):
+		#parameters
+		var.responseModified=u''
+		var.questionAppend=var.noAnswerError
+		#show question until answer is given
+		while(var.responseModified==u''):
+			# Create a form
+			form = Form(
+				cols=[1]*var.ncols, rows=[2,1],
+				margins=(50,100,50,100), spacing=25
+			)
+			#set widgets: question
+			form.set_widget(Label(text=var.thisQuestion, center=False), (0,0), colspan=var.ncols)
+			#set widgets depending on type and show form
+			#show form and get an answer
+			if var.questionType==u'TextInput':
+				textInput=TextInput(return_accepts=True, stub=u'Antwort', var=u'qAnswer')
+				form.set_widget(textInput, (0,1), colspan=3)
+				#add button to avoid answering
+				form.set_widget(Button(text=u'Ok', var=u'ok'), (3,1))
+				form.set_widget(Button(text=var.avoidQuestion), (4,1))		
+				form_response=form._exec(textInput)
+			elif var.questionType==u'Multiple':
+				for col in range(var.ncols):
+					form.set_widget(Button(text=var.thisQuestionOptions[col]), (col,1))		
+				form_response=form._exec()
+			elif var.questionType==u'ManualCode':
+				textInput=TextInput(return_accepts=True, stub=u'', var=u'qAnswer')
+				form.set_widget(textInput, (0,1))	
+				form_response=form._exec(textInput)
+			else: #default is ShowText to avoid problems with first index
+				form.set_widget(Button(text=u'Ok'), (0,1))
+				form_response=form._exec()
+			#read answer
+			#get text answer from textinput if text is approved by button
+			if var.questionType==u'TextInput' and not form_response==var.avoidQuestion:
+				var.responseModified=var.qAnswer
+			elif var.questionType==u'ManualCode' and not var.qAnswer==var.thisQuestionID:
+				var.responseModified=u''
+				var.questionAppend=u''
+			else: 
+				var.responseModified=form_response
+			#modify question for repeat	
+			var.thisQuestion=var.thisQuestion+var.questionAppend
+			#do not append more if question is again not answered
+			var.questionAppend=u''
+	#save answer in list (for comparison with conditions)	
+	var.answerList.append((var.thisQuestionID,var.responseModified))
+	__end__
+	set _prepare ""
+
+define sketchpad ShowInstructions
+	set duration mouseclick
+	set description "Präsentiert Stimuli"
+	draw textline center=1 color=white font_bold=no font_family=sans font_italic=no font_size="[instructionFontSize]" html=yes show_if=always text="[instructionsText]" x=0 y=0 z_index=0
+
+define sketchpad ShowInstructionsFixedDuration
+	set duration "[instructionDuration]"
+	set description "Präsentiert Stimuli"
+	draw textline center=1 color=white font_bold=no font_family=sans font_italic=no font_size="[instructionFontSize]" html=yes show_if=always text="[instructionsText1]" x=0 y=0 z_index=0
+
+define loop ShowStimuli
+	set source_file ""
+	set source table
+	set repeat "[loopRuns]"
+	set order sequential
+	set description "Führt wiederholt ein anderes Item aus"
+	set cycles 1
+	set continuous no
+	set break_if_on_first yes
+	set break_if "[endTime]>[maxDuration]"
+	setcycle 0 empty_column ""
+	run ShowStimuliSequence
+
+define sequence ShowStimuliSequence
+	set flush_keyboard yes
+	set description "Führt mehrere Items nacheinander aus"
+	run setStartTime always
+	run SetClicked always
+	run SetNamesAndResponses always
+	run Stimulus always
+	run ShowStimulus always
+	run ShowStimulusLoop never
+	run Fixation always
+	run GetResults always
+	run stimulusLogger always
+	run calculateDuration always
+
+define inline_script ShowStimulus
+	set description "Executes Python code"
+	___run__
+	while var.nextButton==0:# or not var.show1+var.show2==1:
+		items.execute(u'ShowStimulusLoop')
+		if var.nextButton==1 and not var.show0+var.show1+var.show2+var.show3+ var.show4+var.show5+var.show6+var.show7==var.nStimuli//2:
+			var.error=u'Bitte die Hälfte der items auswählen'
+			var.nextButton=0
+		else:
+			var.error=u''
+	__end__
+	set _prepare ""
+
+define sequence ShowStimulusLoop
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+	run Stimulus always
+	run mouseResponse always
+	run GetClicked always
+
+define sketchpad Stimulus
+	# stimulus display, also used in ShowStimuliSequence such that it is already shown during preparation of ShowStimulusLoop
+	# border for stimuli 0,1 and feedback
+	# border for stimuli 2,3 and feedback
+	# border for stimuli 4,5 and feedback
+	# border for stimuli 6,7 and feedback
+	set duration 0
+	set description "Präsentiert Stimuli"
+	draw rect color="#ffffff" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show0]==1" w="[lengthBorders]" x="[x1B]" y="[yBorderTop]" z_index=3
+	draw rect color="#ffffff" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show1]==1" w="[lengthBorders]" x="[x2B]" y="[yBorderTop]" z_index=3
+	draw rect color="#ffffff" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show2]==1" w="[lengthBorders]" x="[x3B]" y="[yBorderTop]" z_index=3
+	draw rect color="#ffffff" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show3]==1" w="[lengthBorders]" x="[x4B]" y="[yBorderTop]" z_index=3
+	draw rect color="#ffffff" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show4]==1" w="[lengthBorders]" x="[x1B]" y="[yBorderBottom]" z_index=3
+	draw rect color="#ffffff" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show5]==1" w="[lengthBorders]" x="[x2B]" y="[yBorderBottom]" z_index=3
+	draw rect color="#ffffff" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show6]==1" w="[lengthBorders]" x="[x3B]" y="[yBorderBottom]" z_index=3
+	draw rect color="#ffffff" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show7]==1" w="[lengthBorders]" x="[x4B]" y="[yBorderBottom]" z_index=3
+	draw rect color="#800000" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show0r]==1" w="[lengthBorders]" x="[x1B]" y="[yBorderTop]" z_index=2
+	draw rect color="#800000" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show1r]==1" w="[lengthBorders]" x="[x2B]" y="[yBorderTop]" z_index=2
+	draw rect color="#800000" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show2r]==1" w="[lengthBorders]" x="[x3B]" y="[yBorderTop]" z_index=2
+	draw rect color="#800000" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show3r]==1" w="[lengthBorders]" x="[x4B]" y="[yBorderTop]" z_index=2
+	draw rect color="#800000" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show4r]==1" w="[lengthBorders]" x="[x1B]" y="[yBorderBottom]" z_index=2
+	draw rect color="#800000" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show5r]==1" w="[lengthBorders]" x="[x2B]" y="[yBorderBottom]" z_index=2
+	draw rect color="#800000" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show6r]==1" w="[lengthBorders]" x="[x3B]" y="[yBorderBottom]" z_index=2
+	draw rect color="#800000" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show7r]==1" w="[lengthBorders]" x="[x4B]" y="[yBorderBottom]" z_index=2
+	draw rect color="#008000" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show0g]==1" w="[lengthBorders]" x="[x1B]" y="[yBorderTop]" z_index=1
+	draw rect color="#008000" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show1g]==1" w="[lengthBorders]" x="[x2B]" y="[yBorderTop]" z_index=1
+	draw rect color="#008000" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show2g]==1" w="[lengthBorders]" x="[x3B]" y="[yBorderTop]" z_index=1
+	draw rect color="#008000" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show3g]==1" w="[lengthBorders]" x="[x4B]" y="[yBorderTop]" z_index=1
+	draw rect color="#008000" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show4g]==1" w="[lengthBorders]" x="[x1B]" y="[yBorderBottom]" z_index=1
+	draw rect color="#008000" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show5g]==1" w="[lengthBorders]" x="[x2B]" y="[yBorderBottom]" z_index=1
+	draw rect color="#008000" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show6g]==1" w="[lengthBorders]" x="[x3B]" y="[yBorderBottom]" z_index=1
+	draw rect color="#008000" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show7g]==1" w="[lengthBorders]" x="[x4B]" y="[yBorderBottom]" z_index=1
+	draw rect color="#ffffff" fill=1 h="[buttonHeight]" name=nextBG penwidth=1 show_if=always w="[buttonWidth]" x="[xbuttonBG]" y="[yButtonBG]" z_index=1
+	draw textline center=1 color=black font_bold=no font_family=sans font_italic=no font_size=24 html=yes name=next show_if=always text=Weiter x="[x4]" y="[yButton]" z_index=1
+	draw textline center=1 color=red font_bold=no font_family=sans font_italic=no font_size=48 html=yes show_if=always text="[error]" x=0 y="-[yButton]" z_index=1
+	draw image center=1 file="[comparisonFile]" name=base scale=1 show_if=always x="[x0]" y=0 z_index=0
+	draw image center=1 file="[target0File]" name=target0 scale=1 show_if="[nStimuli]>0" x="[x1]" y="-[yOffset]" z_index=0
+	draw image center=1 file="[target1File]" name=target1 scale=1 show_if="[nStimuli]>1" x="[x2]" y="-[yOffset]" z_index=0
+	draw image center=1 file="[target2File]" name=target2 scale=1 show_if="[nStimuli]>2" x="[x3]" y="-[yOffset]" z_index=0
+	draw image center=1 file="[target3File]" name=target3 scale=1 show_if="[nStimuli]>3" x="[x4]" y="-[yOffset]" z_index=0
+	draw image center=1 file="[target4File]" name=target4 scale=1 show_if="[nStimuli]>4" x="[x1]" y="[yOffset]" z_index=0
+	draw image center=1 file="[target5File]" name=target5 scale=1 show_if="[nStimuli]>5" x="[x2]" y="[yOffset]" z_index=0
+	draw image center=1 file="[target6File]" name=target6 scale=1 show_if="[nStimuli]>6" x="[x3]" y="[yOffset]" z_index=0
+	draw image center=1 file="[target7File]" name=target7 scale=1 show_if="[nStimuli]>7" x="[x4]" y="[yOffset]" z_index=0
+
+define inline_script StimulusRandomization
+	set description "Executes Python code"
+	set _run ""
+	___prepare__
+	import random
+	#initialize lists
+	stimulusList=list()
+	stimulusList1=list()
+	#add all stimuli once to stimulusList1
+	for model in var.models:
+		for angle in var.angles:
+			for orientation in var.orientations:
+				if angle==0:
+					stimulusList1.append((model,angle,orientation,var.axes[0]))
+				else:	
+					for axis in var.axes:
+						stimulusList1.append((model,angle,orientation,axis))
+						
+	for i in range(var.numberOfTrials):
+		#randomize order in stimulusList1 until overlap condition is met	
+		overlap=1
+		while overlap>0:
+			random.shuffle(stimulusList1)
+			overlap=len(set(stimulusList1[:var.minOverlap]).intersection(stimulusList[len(stimulusList)-var.minOverlap:]))
+		#add all stimuli to stimulusList	
+		for stimulusPair in stimulusList1:
+			stimulusList.append(stimulusPair)
+	var.stimulusList=stimulusList
+	#set starting index (continued list through all blocks)
+	var.stimulusNumber=0
+	__end__
+
+define inline_script calculateDuration
+	set description "Executes Python code"
+	___run__
+	#calculate end time of fixation from start of fixation
+	#use the time in between to prepare next stimulus
+	var.endTime=var.time_Fixation+var.feedbackDuration-var.startTimeOfBlock
+	#check if time is out
+	if var.endTime>var.maxDuration and var.feedback:
+		#show feedback
+		clock.sleep(var.endTime-self.time()+var.startTimeOfBlock)
+	#note that feedback for other trials is shown in prepare phase of this script
+	__end__
+	___prepare__
+	#and show feedback/fixation of previous trial for approximately the correct time
+	#print(var.endTime-self.time()+var.startTimeOfBlock)
+	clock.sleep(var.endTime-self.time()+var.startTimeOfBlock)
+	#note that exit condition is checked in run phase of this script
+	__end__
+
+define sequence experiment
+	set flush_keyboard yes
+	set description "Führt mehrere Items nacheinander aus"
+	run License always
+	run parameters always
+	run StimulusRandomization always
+	run CreateID always
+	run functions always
+	run Blocks always
+	run Questionaire always
+
+define inline_script functions
+	set description "Executes Python code"
+	___run__
+	global getStimulusname
+	def getStimulusname(model, angle, orientation, axis):
+	    if angle==0:
+		    return(str(model)+u'_'+orientation+u'.png')
+	    else:
+		    return(str(model)+u'_'+orientation+u'_'+axis+u'_'+str(angle)+u'.png')
+	__end__
+	set _prepare ""
+
+define mouse_response mouseResponse
+	set timeout infinite
+	set show_cursor yes
+	set linked_sketchpad Stimulus
+	set flush yes
+	set event_type mouseclick
+	set duration mouseclick
+	set description "Sammelt Mausreaktionen"
+	set allowed_responses "1;3"
+
+define inline_script parameters
+	set description "Executes Python code"
+	set _run ""
+	___prepare__
+	### parameters
+	#should a custom ID be used? Otherwise date and time will be ID
+	#1 for true, 0 (or other) for false) #true is converted to yes, use 0/1 instead
+	var.customID=0
+	#ID prompt (only necessary if customID is used)
+	var.IDprompt=u'Bitte ID eingeben und mit Enter bestätigen.'
+	##feedback/fixation (fixation is automatically chosen if no feedback is given)
+	#also used to replace placeholders in instructions
+	var.feedbackCorrect=u'✓'
+	var.feedbackWrong=u'✗'
+	var.fixation=u'+'
+	##instructions
+	#minimum duration of instructions in ms
+	var.instructionDuration=1000
+	var.instructionFontSize=18
+	##questionaire: 
+	#option to avoid question
+	var.avoidQuestion=u'keine Angabe'
+	#file containing questions
+	var.questionaireFile=u'Fragebogen.txt'
+	#added message if no answer is given
+	var.noAnswerError=u'\n\nBitte geben Sie eine Antwort ein'
+	##stimulus generation
+	#number of occurences of each stimulus in the generated random list
+	var.numberOfTrials=10
+	#stimulus parameters
+	var.minOverlap=10 #minimal number of stimuli at start and end of random lists, that are not the same (should be at least 0 and well below total number of stimuli divided by 2 otherwise endless looping)
+	#array of model numbers
+	numberOfModels=16
+	var.models=list(range(1,numberOfModels+1))
+	#angles of rotation
+	angleDiff=45
+	minAngle=0
+	maxAngle=360
+	var.angles=list(range(minAngle,maxAngle,angleDiff))
+	#orientations
+	var.orientations=[u'a',u'b']
+	#axes
+	var.axes=[u'z']
+	##placement of images
+	#for 1920x1080 monitor
+	# 960 is distance to center for sides
+	# for image size 360, subtract half (180) from edges
+	# left align: 780
+	# right align:
+	# 4x320+160=1440
+	# 1440-960=480
+	# 800-480=320
+	#x offset of first image
+	xFirst=-780
+	#additional distance from first image
+	xDiffAdd=120
+	#distance between images in pixels
+	var.distance=360
+	#calculate all x positions
+	var.x0=xFirst
+	var.x1=xFirst+xDiffAdd+var.distance
+	var.x2=xFirst+xDiffAdd+2*var.distance
+	var.x3=xFirst+xDiffAdd+3*var.distance
+	var.x4=xFirst+xDiffAdd+4*var.distance
+	#placement of borders
+	var.lengthBorders=var.distance-10
+	var.x1B=var.x1-var.lengthBorders/2
+	var.x2B=var.x2-var.lengthBorders/2
+	var.x3B=var.x3-var.lengthBorders/2
+	var.x4B=var.x4-var.lengthBorders/2
+	var.yB=-var.lengthBorders/2
+	#placement of button
+	var.buttonWidth=200
+	var.buttonHeight=50
+	var.xbuttonBG=var.x4-var.buttonWidth/2
+	var.yButton=var.distance+var.buttonHeight
+	var.yButtonBG=var.yButton-var.buttonHeight/2
+	__end__
+
+define inline_script prepareQuestion
+	set description "Executes Python code"
+	set _run ""
+	___prepare__
+	#get this question
+	thisQuestionFull=var.questionsText[var.questionNumber]
+	var.questionNumber=var.questionNumber+1
+	#prepare
+	var.showQuestion=1
+	#get question type
+	#if question starts with ( -> type
+	if thisQuestionFull[0]==u'(':
+		thisQuestionSplit=thisQuestionFull.split(u')')
+		thisQuestionType=thisQuestionSplit[0].replace(u'(','',1)
+		#rest of question (+2 for brackets)
+		thisQuestionRest=thisQuestionFull[len(thisQuestionType)+2:]
+	else:
+		thisQuestionType=u''
+		thisQuestionRest=thisQuestionFull
+		print(thisQuestionFull[:3])
+	var.questionType=thisQuestionType
+	#if questiontype is multiple -> get Options
+	if thisQuestionType=='Multiple':
+		#get options in parenthenses
+		var.thisQuestionOptions=thisQuestionRest.split(u')')[0].split(u',')
+		#remove leading (
+		var.thisQuestionOptions[0]=var.thisQuestionOptions[0][1:]
+		#add additional option
+		var.thisQuestionOptions.append(var.avoidQuestion)
+		var.ncols=len(var.thisQuestionOptions)
+		thisQuestionRest=thisQuestionRest[len(thisQuestionRest.split(u')')[0])+1:]
+	elif thisQuestionType=='TextInput':
+		var.ncols=5
+	else:	
+		var.ncols=1
+	#if question starts with ( -> ID
+	if thisQuestionRest[0]==u'(':
+		thisQuestionNext=thisQuestionRest.split(u')')[0].replace(u'(','',1)
+		thisQuestionRest=thisQuestionRest[len(thisQuestionNext)+2:]
+		var.thisQuestionID=thisQuestionNext
+	else:
+		var.thisQuestionID=var.questionNumber #added 1 is included here
+	#if question starts with ( -> check
+	if thisQuestionRest[0]==u'(':
+		thisQuestionNext=thisQuestionRest.split(u')')[0].replace(u'(','',1)
+		thisQuestionRest=thisQuestionRest[len(thisQuestionNext)+2:]
+		if "==" in thisQuestionNext:
+			#comparison condition with ID
+			checkID=thisQuestionNext.split(u'==')[0]
+			checkAnswer=thisQuestionNext.split(u'==')[1]
+			#print(checkID+u' '+checkAnswer)
+			if (checkID,checkAnswer) in var.answerList:
+				#condition fulfilled
+				#showing question
+				#if question starts with ( -> ?
+				if thisQuestionRest[0]==u'(':
+					#other operation? add later
+					print(u'no processing being added yet for ' + thisQuestionNext)
+			else:
+				#condition not fulfilled
+				#do not show question (but do log)
+				var.responseModified=checkID+u'!='+checkAnswer
+				var.showQuestion=0
+		else:
+			#other operation? add later
+			print(u'no processing being added yet for ' + thisQuestionNext)
+	
+	var.thisQuestion=thisQuestionRest.replace(u'--',u'\n')
+	__end__
+
+define logger questionaireLogger
+	set description "Logs experimental data"
+	set auto_log no
+	log aaBlock
+	log thisQuestionID
+	log responseModified
+	log aaID
+
+define inline_script setStartTime
+	set description "Executes Python code"
+	___run__
+	#start time of run phase (after preparation)
+	var.duration=self.time()-var.startTimeOfBlock
+	__end__
+	___prepare__
+	#set startTime after all initialization of loop
+	if var.stimulusNumber==var.firstIndexOfBlock:
+		var.startTimeOfBlock=self.time()
+		var.endTime=0
+	#note that start time of run phase is set in run part of this script
+	__end__
+
+define inline_script setTime
+	set description "Executes Python code"
+	___run__
+	#set timing options
+	var.endTime=0
+	var.maxDuration=var.maxDurationMins*60*1000
+	#set maximal number of loop items
+	var.loopRuns=len(var.stimulusList)-var.stimulusNumber
+	var.firstIndexOfBlock=var.stimulusNumber
+	__end__
+	set _prepare ""
+
+define logger stimulusLogger
+	# log time_Fixation
+	set description "Registriert experimentelle Daten"
+	set auto_log no
+	log model
+	log angle
+	log orientation
+	log axis
+	log aaBlock
+	log time_Stimulus
+	log duration
+	log aaID
+	log nStimuli
+	log correctStimuli
+	log answers
+
