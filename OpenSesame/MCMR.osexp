@@ -51,21 +51,35 @@ define loop Blocks
 	set repeat 1
 	set order sequential
 	set description "Führt wiederholt ein anderes Item aus"
-	set cycles 2
+	set cycles 3
 	set continuous no
 	set break_if_on_first yes
 	set break_if never
 	setcycle 0 aaBlock practice
 	setcycle 0 instructions "InstructionsPractice.txt"
-	setcycle 0 maxDurationMins 0
+	setcycle 0 maxDurationMins 15
 	setcycle 0 feedbackDuration 500
 	setcycle 0 feedback 1
+	setcycle 0 maxNumberStimuli 3
 	setcycle 1 aaBlock main
 	setcycle 1 instructions "Instructions.txt"
-	setcycle 1 maxDurationMins 10
+	setcycle 1 maxDurationMins 6
 	setcycle 1 feedbackDuration 500
 	setcycle 1 feedback 0
+	setcycle 1 maxNumberStimuli 14
+	setcycle 2 aaBlock main2
+	setcycle 2 instructions "Instructions2.txt"
+	setcycle 2 maxDurationMins 6
+	setcycle 2 feedbackDuration 500
+	setcycle 2 feedback 0
+	setcycle 2 maxNumberStimuli 14
 	run BlockSequence
+
+define sequence Consent
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+	run ReadConsent always
+	run QuestionsLoop_1 always
 
 define inline_script CreateID
 	set description "Executes Python code"
@@ -145,8 +159,8 @@ define inline_script GetResults
 	var.correctStimuli=[var.correct0,var.correct1,var.correct2,var.correct3, var.correct4,var.correct5,var.correct6,var.correct7]
 	#selected stimuli
 	var.answers=[var.show0,var.show1,var.show2,var.show3, var.show4,var.show5,var.show6,var.show7]
-	#var.correctAnswers=[int(var.correctStimuli[i]==var.answers[i]) for i in range(var.nStimuli)]
-	#var.sumCorrect=sum(var.correctAnswers)
+	var.correctAnswers=[int(var.correctStimuli[i]==var.answers[i]) for i in range(var.nStimuli)]
+	var.sumCorrect=sum(var.correctAnswers)
 	#print(var.sumCorrect)
 	__end__
 	set _prepare ""
@@ -178,6 +192,12 @@ define sequence QuestionSequence
 	run ShowForm always
 	run questionaireLogger always
 
+define sequence QuestionSequence_1
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+	run prepareQuestion always
+	run ShowForm always
+
 define sequence Questionaire
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
@@ -197,13 +217,40 @@ define loop QuestionsLoop
 	setcycle 0 empty_column ""
 	run QuestionSequence
 
+define loop QuestionsLoop_1
+	set source_file ""
+	set source table
+	set repeat "[numberOfQuestions]"
+	set order random
+	set description "Repeatedly runs another item"
+	set cycles 1
+	set continuous no
+	set break_if_on_first no
+	set break_if never
+	setcycle 0 empty_column ""
+	run QuestionSequence_1
+
+define inline_script ReadConsent
+	set description "Executes Python code"
+	___run__
+	with open(pool[var.consentFile], encoding="utf-8-sig") as file:
+		var.questionsText = file.readlines()
+	var.numberOfQuestions=len(var.questionsText)
+	var.questionNumber=0
+	var.aaBlock=u'consent'
+	var.answerList=list()
+	var.showQuestion=1  #true is converted to yes, use 0/1 instead
+	var.form_response=u''
+	__end__
+	set _prepare ""
+
 define inline_script ReadInstructions
 	set description "Executes Python code"
 	set _run ""
 	___prepare__
 	with open(pool[var.instructions],encoding="utf-8-sig") as file:
 		instructionsText = file.read()
-	var.instructionsText=instructionsText.replace(u'F1',var.feedbackCorrect).replace(u'F2',var.feedbackWrong).replace(u'FX',var.fixation)
+	var.instructionsText=instructionsText.replace(u'FX',var.fixation)
 	var.instructionsText1=var.instructionsText.split(u'(Continue)')[0]
 	#replace part after (Continue) by empty lines to keep spacing/positioning
 	#empty lines are trimmed rigorously (even non-breaking spaces) so dots are displyed
@@ -218,7 +265,6 @@ define inline_script ReadInstructions
 define inline_script ReadQuestions
 	set description "Executes Python code"
 	___run__
-	import string
 	with open(pool[var.questionaireFile], encoding="utf-8-sig") as file:
 		var.questionsText = file.readlines()
 	var.numberOfQuestions=len(var.questionsText)
@@ -234,7 +280,6 @@ define inline_script SetClicked
 	set description "Executes Python code"
 	set _run ""
 	___prepare__
-	import random
 	#show borders if clicked
 	#all as variables because stimulus presentation cannot handle array variables?
 	var.show0=0
@@ -265,15 +310,6 @@ define inline_script SetClicked
 	var.show7g=0
 	#set nextButton to not clicked
 	var.nextButton=0
-	
-	var.nStimuli=random.choice([2,4,8])
-	if var.nStimuli<5:
-	    var.yOffset=0
-	else:
-	    var.yOffset=var.distance/2
-	var.yBorderTop=var.yB-var.yOffset
-	var.yBorderBottom=var.yB+var.yOffset 
-	var.error=u''#str(var.nStimuli)+u' stimuli'
 	__end__
 
 define inline_script SetNamesAndResponses
@@ -282,16 +318,26 @@ define inline_script SetNamesAndResponses
 	___prepare__
 	import random
 	#load next stimuli from stimulusList
-	var.model,var.angle,var.orientation,var.axis=var.stimulusList[var.stimulusNumber]
+	var.model,var.angle,var.orientation,var.axis, var.nStimuli=var.stimulusList[var.stimulusNumber]
 	var.stimulusNumber=var.stimulusNumber+1
-	if var.angle in [0,90,180,270]:
-		#randomize orientation of of figures
+	#set optical parameters depending on number of stimuli
+	if var.nStimuli<5:
+	    var.yOffset=0
+	else:
+	    var.yOffset=var.distance/2
+	var.yBorderTop=var.yB-var.yOffset
+	var.yBorderBottom=var.yB+var.yOffset 
+	#reset error message
+	var.error=u''
+	#choose targets depending on rotation of stimulus
+	if var.angle in var.uprightAngles:
+		#randomize orientation of figures
 		var.orientationsArray=var.orientations*(var.nStimuli//2)
 		random.shuffle(var.orientationsArray)
 		#increase length to 8, exceeding values are not used as stimuli are not shown
 		var.orientationsArray=var.orientationsArray*(8//var.nStimuli)
 		#get random angles such that the same combination of angles and orientation is not repeated
-		#do not use angle 0
+		#do not use angle of stimulus
 		anglesArray1=var.angles.copy()
 		anglesArray1.remove(var.angle)
 		random.shuffle(anglesArray1)
@@ -355,7 +401,7 @@ define inline_script ShowForm
 		while(var.responseModified==u''):
 			# Create a form
 			form = Form(
-				cols=[1]*var.ncols, rows=[2,1],
+				cols=[1]*var.ncols, rows=[3,1],
 				margins=(50,100,50,100), spacing=25
 			)
 			#set widgets: question
@@ -367,7 +413,8 @@ define inline_script ShowForm
 				form.set_widget(textInput, (0,1), colspan=3)
 				#add button to avoid answering
 				form.set_widget(Button(text=u'Ok', var=u'ok'), (3,1))
-				form.set_widget(Button(text=var.avoidQuestion), (4,1))		
+				if var.avoidQuestionsPossible==1:
+					form.set_widget(Button(text=var.avoidQuestion), (4,1))		
 				form_response=form._exec(textInput)
 			elif var.questionType==u'Multiple':
 				for col in range(var.ncols):
@@ -377,6 +424,10 @@ define inline_script ShowForm
 				textInput=TextInput(return_accepts=True, stub=u'', var=u'qAnswer')
 				form.set_widget(textInput, (0,1))	
 				form_response=form._exec(textInput)
+			elif var.questionType==u'NecessaryCheckbox':
+				form.set_widget(Checkbox(text=var.thisQuestionID, var=u'qAnswer'),(0,1),colspan=3)
+				form.set_widget(Button(text=u'Ok'), (3,1))
+				form_response=form._exec()
 			else: #default is ShowText to avoid problems with first index
 				form.set_widget(Button(text=u'Ok'), (0,1))
 				form_response=form._exec()
@@ -384,7 +435,12 @@ define inline_script ShowForm
 			#get text answer from textinput if text is approved by button
 			if var.questionType==u'TextInput' and not form_response==var.avoidQuestion:
 				var.responseModified=var.qAnswer
+			#get if required manual code was entered
 			elif var.questionType==u'ManualCode' and not var.qAnswer==var.thisQuestionID:
+				var.responseModified=u''
+				var.questionAppend=u''
+			#get if checkbox was checked
+			elif var.questionType==u'NecessaryCheckbox' and var.qAnswer==u'no':
 				var.responseModified=u''
 				var.questionAppend=u''
 			else: 
@@ -411,7 +467,7 @@ define sketchpad ShowInstructionsFixedDuration
 define loop ShowStimuli
 	set source_file ""
 	set source table
-	set repeat "[loopRuns]"
+	set repeat "[maxNumberStimuli]"
 	set order sequential
 	set description "Führt wiederholt ein anderes Item aus"
 	set cycles 1
@@ -505,25 +561,54 @@ define inline_script StimulusRandomization
 	set _run ""
 	___prepare__
 	import random
+	#copy arrays for randomizing
+	modelsCopy=var.models.copy()
+	rotatedAnglesCopy=var.rotatedAngles.copy()
+	uprightAnglesCopy=var.uprightAngles.copy()
+	orientationsCopy=var.orientations.copy()
+	#randomize all
+	random.shuffle(modelsCopy)
+	random.shuffle(rotatedAnglesCopy)
+	random.shuffle(uprightAnglesCopy)	
+	random.shuffle(orientationsCopy)
+	#axesCopy=var.axes.copy() #axes not copied because only one used
+	axis=var.axes[0]
 	#initialize lists
 	stimulusList=list()
+	#add practice blocks
+	#one item with 2 stimuli rotated, 4 upright, 8 rotated
+	stimulusList.append((modelsCopy[1%len(modelsCopy)],uprightAnglesCopy[1%len(uprightAnglesCopy)],random.choice(orientationsCopy),axis,2))
+	stimulusList.append((modelsCopy[2%len(modelsCopy)],rotatedAnglesCopy[2%len(rotatedAnglesCopy)],random.choice(orientationsCopy),axis,4))
+	stimulusList.append((modelsCopy[3%len(modelsCopy)],uprightAnglesCopy[3%len(uprightAnglesCopy)],random.choice(orientationsCopy),axis,8))
+	random.shuffle(stimulusList)
 	stimulusList1=list()
-	#add all stimuli once to stimulusList1
-	for model in var.models:
-		for angle in var.angles:
-			for orientation in var.orientations:
-				if angle==0:
-					stimulusList1.append((model,angle,orientation,var.axes[0]))
-				else:	
-					for axis in var.axes:
-						stimulusList1.append((model,angle,orientation,axis))
-						
-	for i in range(var.numberOfTrials):
-		#randomize order in stimulusList1 until overlap condition is met	
-		overlap=1
-		while overlap>0:
-			random.shuffle(stimulusList1)
-			overlap=len(set(stimulusList1[:var.minOverlap]).intersection(stimulusList[len(stimulusList)-var.minOverlap:]))
+	#two blocks with each combination at least once
+	for j in range(2):
+		#4 times 2 stimuli in each condition
+		#2 times 4 stimuli in each condition
+		#1 times 8 stimuli in each condition
+		#total = 7
+		stimulusNumbers=[2,2,2,2,4,4,8]
+		#randomize all
+		random.shuffle(modelsCopy)
+		random.shuffle(rotatedAnglesCopy)
+		random.shuffle(orientationsCopy)
+		random.shuffle(stimulusNumbers)
+		#random.shuffle(axesCopy)
+		#add random combinations for each stimulusnumber such taht there are no repeats
+		for i in range(7):
+					stimulusList1.append((modelsCopy[i%len(modelsCopy)],rotatedAnglesCopy[i%len(rotatedAnglesCopy)],orientationsCopy[i%len(orientationsCopy)],axis,stimulusNumbers[i]))
+		#repeat for upright angles
+		random.shuffle(modelsCopy)
+		random.shuffle(uprightAnglesCopy)
+		random.shuffle(orientationsCopy)
+		random.shuffle(stimulusNumbers)
+		#random.shuffle(axesCopy)
+		#add random combinations for each stimulusnumber such taht there are no repeats
+		for i in range(7):
+				stimulusList1.append((modelsCopy[i%len(modelsCopy)],uprightAnglesCopy[i%len(uprightAnglesCopy)],orientationsCopy[i%len(orientationsCopy)],axis,stimulusNumbers[i]))
+		#randomize all stimuli in this block		
+		random.shuffle(stimulusList1)
 		#add all stimuli to stimulusList	
 		for stimulusPair in stimulusList1:
 			stimulusList.append(stimulusPair)
@@ -559,6 +644,7 @@ define sequence experiment
 	run StimulusRandomization always
 	run CreateID always
 	run functions always
+	run Consent always
 	run Blocks always
 	run Questionaire always
 
@@ -594,10 +680,7 @@ define inline_script parameters
 	var.customID=0
 	#ID prompt (only necessary if customID is used)
 	var.IDprompt=u'Bitte ID eingeben und mit Enter bestätigen.'
-	##feedback/fixation (fixation is automatically chosen if no feedback is given)
-	#also used to replace placeholders in instructions
-	var.feedbackCorrect=u'✓'
-	var.feedbackWrong=u'✗'
+	#fixation symbol between tasks
 	var.fixation=u'+'
 	##instructions
 	#minimum duration of instructions in ms
@@ -605,16 +688,15 @@ define inline_script parameters
 	var.instructionFontSize=18
 	##questionaire: 
 	#option to avoid question
+	var.avoidQuestionsPossible=0
 	var.avoidQuestion=u'keine Angabe'
+	#file containing consent
+	var.consentFile=u'Consent.txt'
 	#file containing questions
 	var.questionaireFile=u'Fragebogen.txt'
 	#added message if no answer is given
 	var.noAnswerError=u'\n\nBitte geben Sie eine Antwort ein'
 	##stimulus generation
-	#number of occurences of each stimulus in the generated random list
-	var.numberOfTrials=10
-	#stimulus parameters
-	var.minOverlap=10 #minimal number of stimuli at start and end of random lists, that are not the same (should be at least 0 and well below total number of stimuli divided by 2 otherwise endless looping)
 	#array of model numbers
 	numberOfModels=16
 	var.models=list(range(1,numberOfModels+1))
@@ -623,6 +705,9 @@ define inline_script parameters
 	minAngle=0
 	maxAngle=360
 	var.angles=list(range(minAngle,maxAngle,angleDiff))
+	#separate upright and rotated angles
+	var.rotatedAngles=[45,135,225,315]
+	var.uprightAngles=[0,90,180,270]
 	#orientations
 	var.orientations=[u'a',u'b']
 	#axes
@@ -691,11 +776,14 @@ define inline_script prepareQuestion
 		#remove leading (
 		var.thisQuestionOptions[0]=var.thisQuestionOptions[0][1:]
 		#add additional option
-		var.thisQuestionOptions.append(var.avoidQuestion)
+		if var.avoidQuestionsPossible==1:
+			var.thisQuestionOptions.append(var.avoidQuestion)
 		var.ncols=len(var.thisQuestionOptions)
 		thisQuestionRest=thisQuestionRest[len(thisQuestionRest.split(u')')[0])+1:]
 	elif thisQuestionType=='TextInput':
-		var.ncols=5
+		var.ncols=4+var.avoidQuestionsPossible
+	elif thisQuestionType=='NecessaryCheckbox':
+		var.ncols=4
 	else:	
 		var.ncols=1
 	#if question starts with ( -> ID
@@ -746,6 +834,7 @@ define inline_script setStartTime
 	___run__
 	#start time of run phase (after preparation)
 	var.duration=self.time()-var.startTimeOfBlock
+	#note that parameters of first loop are set in prepare phase of this script
 	__end__
 	___prepare__
 	#set startTime after all initialization of loop
@@ -761,8 +850,7 @@ define inline_script setTime
 	#set timing options
 	var.endTime=0
 	var.maxDuration=var.maxDurationMins*60*1000
-	#set maximal number of loop items
-	var.loopRuns=len(var.stimulusList)-var.stimulusNumber
+	#set first index
 	var.firstIndexOfBlock=var.stimulusNumber
 	__end__
 	set _prepare ""
@@ -774,7 +862,6 @@ define logger stimulusLogger
 	log model
 	log angle
 	log orientation
-	log axis
 	log aaBlock
 	log time_Stimulus
 	log duration
@@ -782,4 +869,6 @@ define logger stimulusLogger
 	log nStimuli
 	log correctStimuli
 	log answers
+	log correctAnswers
+	log sumCorrect
 
