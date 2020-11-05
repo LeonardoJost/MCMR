@@ -61,18 +61,21 @@ define loop Blocks
 	setcycle 0 feedbackDuration 500
 	setcycle 0 feedback 1
 	setcycle 0 maxNumberStimuli 3
+	setcycle 0 firstIndexOfBlock 0
 	setcycle 1 aaBlock main
 	setcycle 1 instructions "Instructions.txt"
 	setcycle 1 maxDurationMins 6
 	setcycle 1 feedbackDuration 500
 	setcycle 1 feedback 0
 	setcycle 1 maxNumberStimuli 14
+	setcycle 1 firstIndexOfBlock 3
 	setcycle 2 aaBlock main2
 	setcycle 2 instructions "Instructions2.txt"
 	setcycle 2 maxDurationMins 6
 	setcycle 2 feedbackDuration 500
 	setcycle 2 feedback 0
 	setcycle 2 maxNumberStimuli 14
+	setcycle 2 firstIndexOfBlock 17
 	run BlockSequence
 
 define sequence Consent
@@ -167,8 +170,8 @@ define inline_script GetResults
 
 define notepad License
 	__note__
-	### Mental Rotation experiment according to Jost & Jansen (2019)
-	#     Copyright (C) 2019  Leonardo Jost
+	### Multiple Choice Mental Rotation experiment
+	#     Copyright (C) 2020  Leonardo Jost
 	# 
 	# This program is free software: you can redistribute it and/or modify
 	# it under the terms of the GNU General Public License as published by
@@ -253,11 +256,11 @@ define inline_script ReadInstructions
 	var.instructionsText=instructionsText.replace(u'FX',var.fixation)
 	var.instructionsText1=var.instructionsText.split(u'(Continue)')[0]
 	#replace part after (Continue) by empty lines to keep spacing/positioning
-	#empty lines are trimmed rigorously (even non-breaking spaces) so dots are displyed
+	#empty lines are trimmed rigorously (even non-breaking spaces) so dots are displayed
 	#pixelwise positioning of text is another option but difficult as converting fontsize to px is not uniform
 	if len(var.instructionsText.split(u'(Continue)'))>1:
-		continueLines=var.instructionsText.split(u'(Continue)')[1].count(u'\n')+1
-		var.instructionsText1+=u'.\n'*continueLines
+		continueLines=var.instructionsText.split(u'(Continue)')[1].count(u'\n')
+		var.instructionsText1+=u'<span style="color:rgba(0,0,0,.01)">.</span>\n'*continueLines
 	#remove (Continue)
 	var.instructionsText=var.instructionsText.replace(u'(Continue)',u'')
 	__end__
@@ -494,10 +497,12 @@ define sequence ShowStimuliSequence
 define inline_script ShowStimulus
 	set description "Executes Python code"
 	___run__
-	while var.nextButton==0:# or not var.show1+var.show2==1:
+	#update clicked figures until next button is clicked
+	while var.nextButton==0:
 		items.execute(u'ShowStimulusLoop')
+		#check if half of items are selected if next button is clicked
 		if var.nextButton==1 and not var.show0+var.show1+var.show2+var.show3+ var.show4+var.show5+var.show6+var.show7==var.nStimuli//2:
-			var.error=u'Bitte die Hälfte der items auswählen'
+			var.error=var.errorMessage
 			var.nextButton=0
 		else:
 			var.error=u''
@@ -577,41 +582,54 @@ define inline_script StimulusRandomization
 	stimulusList=list()
 	#add practice blocks
 	#one item with 2 stimuli rotated, 4 upright, 8 rotated
-	stimulusList.append((modelsCopy[1%len(modelsCopy)],uprightAnglesCopy[1%len(uprightAnglesCopy)],random.choice(orientationsCopy),axis,2))
-	stimulusList.append((modelsCopy[2%len(modelsCopy)],rotatedAnglesCopy[2%len(rotatedAnglesCopy)],random.choice(orientationsCopy),axis,4))
-	stimulusList.append((modelsCopy[3%len(modelsCopy)],uprightAnglesCopy[3%len(uprightAnglesCopy)],random.choice(orientationsCopy),axis,8))
+	stimulusList.append((modelsCopy[0%len(modelsCopy)],uprightAnglesCopy[0%len(uprightAnglesCopy)],random.choice(orientationsCopy),axis,2))
+	stimulusList.append((modelsCopy[1%len(modelsCopy)],rotatedAnglesCopy[0%len(rotatedAnglesCopy)],random.choice(orientationsCopy),axis,4))
+	stimulusList.append((modelsCopy[2%len(modelsCopy)],uprightAnglesCopy[1%len(uprightAnglesCopy)],random.choice(orientationsCopy),axis,8))
 	random.shuffle(stimulusList)
-	stimulusList1=list()
-	#two blocks with each combination at least once
-	for j in range(2):
-		#4 times 2 stimuli in each condition
-		#2 times 4 stimuli in each condition
-		#1 times 8 stimuli in each condition
-		#total = 7
-		stimulusNumbers=[2,2,2,2,4,4,8]
-		#randomize all
-		random.shuffle(modelsCopy)
-		random.shuffle(rotatedAnglesCopy)
-		random.shuffle(orientationsCopy)
-		random.shuffle(stimulusNumbers)
-		#random.shuffle(axesCopy)
-		#add random combinations for each stimulusnumber such taht there are no repeats
-		for i in range(7):
-					stimulusList1.append((modelsCopy[i%len(modelsCopy)],rotatedAnglesCopy[i%len(rotatedAnglesCopy)],orientationsCopy[i%len(orientationsCopy)],axis,stimulusNumbers[i]))
-		#repeat for upright angles
-		random.shuffle(modelsCopy)
-		random.shuffle(uprightAnglesCopy)
-		random.shuffle(orientationsCopy)
-		random.shuffle(stimulusNumbers)
-		#random.shuffle(axesCopy)
-		#add random combinations for each stimulusnumber such taht there are no repeats
-		for i in range(7):
-				stimulusList1.append((modelsCopy[i%len(modelsCopy)],uprightAnglesCopy[i%len(uprightAnglesCopy)],orientationsCopy[i%len(orientationsCopy)],axis,stimulusNumbers[i]))
-		#randomize all stimuli in this block		
-		random.shuffle(stimulusList1)
-		#add all stimuli to stimulusList	
-		for stimulusPair in stimulusList1:
-			stimulusList.append(stimulusPair)
+	#main blocks
+	#randomize order of orientations and stimulus number first, counter balanced between blocks
+	#4 times 2 stimuli in each condition
+	#2 times 4 stimuli in each condition
+	#1 times 8 stimuli in each condition
+	#total = 7
+	#create list containing each number for each orientation
+	stimulusNumbers=[2,2,2,2,4,4,8]
+	upright=[0,1]
+	orientationList=list()
+	for stimNum in stimulusNumbers:
+		for up in upright:
+			orientationList.append((stimNum,up))
+	random.shuffle(orientationList)
+	#add reversed order of halves for second block
+	orientationListFirst=orientationList[:7]
+	orientationListSecond=orientationList[7:]
+	random.shuffle(orientationListFirst)
+	random.shuffle(orientationListSecond)
+	orientationList=orientationList+orientationListSecond+orientationListFirst
+	#add other stimulus parameters
+	#add random combinations for each stimulusnumber such that there are few repeats
+	#counting variables
+	uprights=2
+	rotateds=1
+	#add 3 to not repeat practice blocks
+	for j in range(3,len(orientationList)+3):
+		stimNum,upright=orientationList[j-3]
+		#randomize orders when list is finished
+		if j%len(modelsCopy)==0:
+			random.shuffle(modelsCopy)
+		if rotateds%len(rotatedAnglesCopy)==0:
+			random.shuffle(rotatedAnglesCopy)
+		if uprights%len(uprightAnglesCopy)==0:
+			random.shuffle(uprightAnglesCopy)
+		if j%len(orientationsCopy)==0:
+			random.shuffle(orientationsCopy)
+		#add stimuli to list depending on orientation (upright or rotated)
+		if upright==1:
+			upright+=1
+			stimulusList.append((modelsCopy[j%len(modelsCopy)],uprightAnglesCopy[uprights%len(uprightAnglesCopy)],orientationsCopy[j%len(orientationsCopy)],axis,stimNum))
+		else:
+			rotateds+=1
+			stimulusList.append((modelsCopy[j%len(modelsCopy)],rotatedAnglesCopy[rotateds%len(rotatedAnglesCopy)],orientationsCopy[j%len(orientationsCopy)],axis,stimNum))
 	var.stimulusList=stimulusList
 	#set starting index (continued list through all blocks)
 	var.stimulusNumber=0
@@ -681,11 +699,11 @@ define inline_script parameters
 	#ID prompt (only necessary if customID is used)
 	var.IDprompt=u'Bitte ID eingeben und mit Enter bestätigen.'
 	#fixation symbol between tasks
-	var.fixation=u'+'
+	var.fixation=u''
 	##instructions
 	#minimum duration of instructions in ms
 	var.instructionDuration=1000
-	var.instructionFontSize=18
+	var.instructionFontSize=24
 	##questionaire: 
 	#option to avoid question
 	var.avoidQuestionsPossible=0
@@ -696,6 +714,8 @@ define inline_script parameters
 	var.questionaireFile=u'Fragebogen.txt'
 	#added message if no answer is given
 	var.noAnswerError=u'\n\nBitte geben Sie eine Antwort ein'
+	##error message when not half of stimuli are selected
+	var.errorMessage=u'Bitte die Hälfte der Figuren auswählen'
 	##stimulus generation
 	#array of model numbers
 	numberOfModels=16
@@ -851,7 +871,7 @@ define inline_script setTime
 	var.endTime=0
 	var.maxDuration=var.maxDurationMins*60*1000
 	#set first index
-	var.firstIndexOfBlock=var.stimulusNumber
+	var.stimulusNumber=var.firstIndexOfBlock
 	__end__
 	set _prepare ""
 
