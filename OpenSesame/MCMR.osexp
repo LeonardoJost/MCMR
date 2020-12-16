@@ -41,7 +41,9 @@ define sequence BlockSequence
 	set description "Führt mehrere Items nacheinander aus"
 	run ReadInstructions always
 	run ShowInstructionsFixedDuration always
+	run waitFixedDuration always
 	run ShowInstructions always
+	run InstructionsMouseResponse always
 	run setTime always
 	run ShowStimuli always
 
@@ -51,31 +53,45 @@ define loop Blocks
 	set repeat 1
 	set order sequential
 	set description "Führt wiederholt ein anderes Item aus"
-	set cycles 3
+	set cycles 5
 	set continuous no
 	set break_if_on_first yes
 	set break_if never
 	setcycle 0 aaBlock practice
 	setcycle 0 instructions "InstructionsPractice.txt"
 	setcycle 0 maxDurationMins 15
-	setcycle 0 feedbackDuration 500
+	setcycle 0 fixationDuration 500
 	setcycle 0 feedback 1
 	setcycle 0 maxNumberStimuli 3
 	setcycle 0 firstIndexOfBlock 0
-	setcycle 1 aaBlock main
+	setcycle 1 aaBlock main1
 	setcycle 1 instructions "Instructions.txt"
-	setcycle 1 maxDurationMins 6
-	setcycle 1 feedbackDuration 500
+	setcycle 1 maxDurationMins 3
+	setcycle 1 fixationDuration 500
 	setcycle 1 feedback 0
 	setcycle 1 maxNumberStimuli 14
 	setcycle 1 firstIndexOfBlock 3
 	setcycle 2 aaBlock main2
 	setcycle 2 instructions "Instructions2.txt"
-	setcycle 2 maxDurationMins 6
-	setcycle 2 feedbackDuration 500
+	setcycle 2 maxDurationMins 3
+	setcycle 2 fixationDuration 500
 	setcycle 2 feedback 0
 	setcycle 2 maxNumberStimuli 14
 	setcycle 2 firstIndexOfBlock 17
+	setcycle 3 aaBlock main3
+	setcycle 3 instructions "Instructions3.txt"
+	setcycle 3 maxDurationMins 3
+	setcycle 3 fixationDuration 500
+	setcycle 3 feedback 0
+	setcycle 3 maxNumberStimuli 14
+	setcycle 3 firstIndexOfBlock 31
+	setcycle 4 aaBlock main4
+	setcycle 4 instructions "Instructions4.txt"
+	setcycle 4 maxDurationMins 3
+	setcycle 4 fixationDuration 500
+	setcycle 4 feedback 0
+	setcycle 4 maxNumberStimuli 14
+	setcycle 4 firstIndexOfBlock 45
 	run BlockSequence
 
 define sequence Consent
@@ -167,6 +183,15 @@ define inline_script GetResults
 	#print(var.sumCorrect)
 	__end__
 	set _prepare ""
+
+define mouse_response InstructionsMouseResponse
+	set timeout infinite
+	set show_cursor yes
+	set linked_sketchpad ShowInstructions
+	set flush yes
+	set event_type mouseclick
+	set duration mouseclick
+	set description "Collects mouse responses"
 
 define notepad License
 	__note__
@@ -315,6 +340,20 @@ define inline_script SetClicked
 	var.nextButton=0
 	__end__
 
+define inline_script SetLogfile
+	set description "Executes Python code"
+	___run__
+	log.close()
+	log.open(exp.experiment_path+u'/Logfiles/ID-%s.csv' % var.aaID)
+	#delete old (empty) log file
+	import os
+	try:
+		os.remove(exp.experiment_path+u'/subject-0.csv')
+	except OSError as e:  ## if failed, report it back to the user ##
+		print ("Error: %s - %s." % (e.filename, e.strerror))
+	__end__
+	set _prepare ""
+
 define inline_script SetNamesAndResponses
 	set description "Executes Python code"
 	set _run ""
@@ -458,12 +497,12 @@ define inline_script ShowForm
 	set _prepare ""
 
 define sketchpad ShowInstructions
-	set duration mouseclick
+	set duration 0
 	set description "Präsentiert Stimuli"
 	draw textline center=1 color=white font_bold=no font_family=sans font_italic=no font_size="[instructionFontSize]" html=yes show_if=always text="[instructionsText]" x=0 y=0 z_index=0
 
 define sketchpad ShowInstructionsFixedDuration
-	set duration "[instructionDuration]"
+	set duration 0
 	set description "Präsentiert Stimuli"
 	draw textline center=1 color=white font_bold=no font_family=sans font_italic=no font_size="[instructionFontSize]" html=yes show_if=always text="[instructionsText1]" x=0 y=0 z_index=0
 
@@ -600,9 +639,18 @@ define inline_script StimulusRandomization
 		for up in upright:
 			orientationList.append((stimNum,up))
 	random.shuffle(orientationList)
-	#add reversed order of halves for second block
+	#add reversed order of halves for second to fourth block
 	orientationListFirst=orientationList[:7]
 	orientationListSecond=orientationList[7:]
+	#second block
+	random.shuffle(orientationListFirst)
+	random.shuffle(orientationListSecond)
+	orientationList=orientationList+orientationListSecond+orientationListFirst
+	#third block (order as in first)
+	random.shuffle(orientationListFirst)
+	random.shuffle(orientationListSecond)
+	orientationList=orientationList+orientationListFirst+orientationListSecond
+	#fourht block (order as in second)
 	random.shuffle(orientationListFirst)
 	random.shuffle(orientationListSecond)
 	orientationList=orientationList+orientationListSecond+orientationListFirst
@@ -613,7 +661,7 @@ define inline_script StimulusRandomization
 	rotateds=1
 	#add 3 to not repeat practice blocks
 	for j in range(3,len(orientationList)+3):
-		stimNum,upright=orientationList[j-3]
+		stimNum,thisStimUpright=orientationList[j-3]
 		#randomize orders when list is finished
 		if j%len(modelsCopy)==0:
 			random.shuffle(modelsCopy)
@@ -624,8 +672,8 @@ define inline_script StimulusRandomization
 		if j%len(orientationsCopy)==0:
 			random.shuffle(orientationsCopy)
 		#add stimuli to list depending on orientation (upright or rotated)
-		if upright==1:
-			upright+=1
+		if thisStimUpright==1:
+			uprights+=1
 			stimulusList.append((modelsCopy[j%len(modelsCopy)],uprightAnglesCopy[uprights%len(uprightAnglesCopy)],orientationsCopy[j%len(orientationsCopy)],axis,stimNum))
 		else:
 			rotateds+=1
@@ -640,7 +688,7 @@ define inline_script calculateDuration
 	___run__
 	#calculate end time of fixation from start of fixation
 	#use the time in between to prepare next stimulus
-	var.endTime=var.time_Fixation+var.feedbackDuration-var.startTimeOfBlock
+	var.endTime=var.time_Fixation+var.fixationDuration-var.startTimeOfBlock
 	#check if time is out
 	if var.endTime>var.maxDuration and var.feedback:
 		#show feedback
@@ -662,6 +710,7 @@ define sequence experiment
 	run StimulusRandomization always
 	run CreateID always
 	run functions always
+	run SetLogfile always
 	run Consent always
 	run Blocks always
 	run Questionaire always
@@ -718,8 +767,7 @@ define inline_script parameters
 	var.errorMessage=u'Bitte die Hälfte der Figuren auswählen'
 	##stimulus generation
 	#array of model numbers
-	numberOfModels=16
-	var.models=list(range(1,numberOfModels+1))
+	var.models=list(range(2,9))+list(range(12,17))
 	#angles of rotation
 	angleDiff=45
 	minAngle=0
@@ -891,4 +939,14 @@ define logger stimulusLogger
 	log answers
 	log correctAnswers
 	log sumCorrect
+	log anglesArray
+
+define inline_script waitFixedDuration
+	set description "Executes Python code"
+	___run__
+	my_mouse = Mouse()
+	my_mouse.show_cursor(show=True)
+	clock.sleep(ms=var.instructionDuration)
+	__end__
+	set _prepare ""
 
