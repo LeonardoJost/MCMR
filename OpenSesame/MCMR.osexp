@@ -44,7 +44,7 @@ define sequence BlockSequence
 	run waitFixedDuration always
 	run ShowInstructions always
 	run InstructionsMouseResponse always
-	run setTime always
+	run setParameters always
 	run ShowStimuli always
 
 define loop Blocks
@@ -59,7 +59,7 @@ define loop Blocks
 	set break_if never
 	setcycle 0 aaBlock practice
 	setcycle 0 instructions "InstructionsPractice.txt"
-	setcycle 0 maxDurationMins 15
+	setcycle 0 maxDurationMins 3
 	setcycle 0 fixationDuration 500
 	setcycle 0 feedback 1
 	setcycle 0 maxNumberStimuli 3
@@ -133,7 +133,9 @@ define inline_script GetClicked
 	#check which item has been clicked and mark item
 	#or if next button has been clicked
 	#items should not be overlapping
-	if u'target0' in var.cursor_roi:
+	if u'next' in var.cursor_roi or var.endTime>var.maxDuration:
+		var.nextButton=1
+	elif u'target0' in var.cursor_roi:
 		var.show0=1-var.show0
 		var.show0r=var.show0*var.feedback
 		var.show0g=var.show0*var.feedback*var.correct0
@@ -165,14 +167,21 @@ define inline_script GetClicked
 		var.show7=1-var.show7
 		var.show7r=var.show7*var.feedback
 		var.show7g=var.show7*var.feedback*var.correct7
-	elif u'next' in var.cursor_roi:
-		var.nextButton=1
+	#check if half of items are selected 
+	if var.show0+var.show1+var.show2+var.show3+ var.show4+var.show5+var.show6+var.show7==var.nStimuli//2:
+		var.nextButtonText=var.continueMessage
+	else:
+		var.nextButtonText=var.errorMessage
+		var.nextButton=0
 	__end__
 	set _prepare ""
 
 define inline_script GetResults
 	set description "Executes Python code"
 	___run__
+	#show mouse
+	my_mouse = Mouse()
+	my_mouse.show_cursor(show=True)
 	#parameters for logging
 	#stimuli which should have been selected
 	var.correctStimuli=[var.correct0,var.correct1,var.correct2,var.correct3, var.correct4,var.correct5,var.correct6,var.correct7]
@@ -338,6 +347,10 @@ define inline_script SetClicked
 	var.show7g=0
 	#set nextButton to not clicked
 	var.nextButton=0
+	var.nextButtonText=var.errorMessage
+	#time and itemnumber for prepare phase
+	var.timeLeft=getNiceTime((var.maxDuration-var.endTime)/1000)
+	var.itemNumber=var.stimulusNumber-var.firstIndexOfBlock+1
 	__end__
 
 define inline_script SetLogfile
@@ -537,14 +550,10 @@ define inline_script ShowStimulus
 	set description "Executes Python code"
 	___run__
 	#update clicked figures until next button is clicked
-	while var.nextButton==0:
+	while var.nextButton==0 and var.endTime<=var.maxDuration:
+		var.timeLeft=getNiceTime((var.maxDuration-var.endTime)/1000)
+		var.itemNumber=var.stimulusNumber-var.firstIndexOfBlock
 		items.execute(u'ShowStimulusLoop')
-		#check if half of items are selected if next button is clicked
-		if var.nextButton==1 and not var.show0+var.show1+var.show2+var.show3+ var.show4+var.show5+var.show6+var.show7==var.nStimuli//2:
-			var.error=var.errorMessage
-			var.nextButton=0
-		else:
-			var.error=u''
 	__end__
 	set _prepare ""
 
@@ -588,8 +597,9 @@ define sketchpad Stimulus
 	draw rect color="#008000" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show6g]==1" w="[lengthBorders]" x="[x3B]" y="[yBorderBottom]" z_index=1
 	draw rect color="#008000" fill=0 h="[lengthBorders]" penwidth=10 show_if="[show7g]==1" w="[lengthBorders]" x="[x4B]" y="[yBorderBottom]" z_index=1
 	draw rect color="#ffffff" fill=1 h="[buttonHeight]" name=nextBG penwidth=1 show_if=always w="[buttonWidth]" x="[xbuttonBG]" y="[yButtonBG]" z_index=1
-	draw textline center=1 color=black font_bold=no font_family=sans font_italic=no font_size=24 html=yes name=next show_if=always text=Weiter x="[x4]" y="[yButton]" z_index=1
-	draw textline center=1 color=red font_bold=no font_family=sans font_italic=no font_size=48 html=yes show_if=always text="[error]" x=0 y="-[yButton]" z_index=1
+	draw textline center=1 color=black font_bold=no font_family=sans font_italic=no font_size=24 html=yes name=next show_if=always text="[nextButtonText]" x="[x4]" y="[yButton]" z_index=1
+	draw textline center=1 color=white font_bold=no font_family=sans font_italic=no font_size=24 html=yes show_if=always text="Aufgabe: [itemNumber]/[maxNumberStimuli]" x="[x0]" y="-[yButton]" z_index=1
+	draw textline center=1 color=white font_bold=no font_family=sans font_italic=no font_size=24 html=yes name=timeField show_if=always text="verbleibende Zeit: [timeLeft]" x="[x4]" y="-[yButton]" z_index=1
 	draw image center=1 file="[comparisonFile]" name=base scale=1 show_if=always x="[x0]" y=0 z_index=0
 	draw image center=1 file="[target0File]" name=target0 scale=1 show_if="[nStimuli]>0" x="[x1]" y="-[yOffset]" z_index=0
 	draw image center=1 file="[target1File]" name=target1 scale=1 show_if="[nStimuli]>1" x="[x2]" y="-[yOffset]" z_index=0
@@ -724,6 +734,14 @@ define inline_script functions
 		    return(str(model)+u'_'+orientation+u'.png')
 	    else:
 		    return(str(model)+u'_'+orientation+u'_'+axis+u'_'+str(angle)+u'.png')
+	
+	global getNiceTime
+	def getNiceTime(timeSeconds):
+	    timeMins=int(timeSeconds/60)
+	    timeSeconds=int(timeSeconds-60*timeMins)
+	    mins=u'0' if timeMins<10 else u''
+	    secs=u'0' if timeSeconds<10 else u''
+	    return(mins+str(timeMins)+u':'+secs+str(timeSeconds))
 	__end__
 	set _prepare ""
 
@@ -736,6 +754,24 @@ define mouse_response mouseResponse
 	set duration mouseclick
 	set description "Sammelt Mausreaktionen"
 	set allowed_responses "1;3"
+
+define inline_script new_inline_script
+	set description "Executes Python code"
+	___run__
+	#inline script to update timer during response collection
+	#thisCanvas should be set to stimulus sketchpad before
+	#duration of mouseResponse should be short (update interval)
+	#does not work properly because mouse cursor blinks on update and responses are lost
+	
+	#show mouse
+	my_mouse = Mouse()
+	my_mouse.show_cursor(show=True)
+	#update timer
+	var.thisCanvas[u'timeField'].text=str(getNiceTime((var.maxDuration-self.time()+var.startTimeOfBlock)/1000))
+	#show until mouseResponse
+	var.thisCanvas.show()
+	__end__
+	set _prepare ""
 
 define inline_script parameters
 	set description "Executes Python code"
@@ -764,8 +800,10 @@ define inline_script parameters
 	#added message if no answer is given
 	var.noAnswerError=u'\n\nBitte geben Sie eine Antwort ein'
 	##error message when not half of stimuli are selected
-	var.errorMessage=u'Bitte die Hälfte der Figuren auswählen'
+	var.errorMessage=u'Sie müssen die Hälfte\nder Figuren auswählen'
+	var.continueMessage=u'Weiter'
 	##stimulus generation
+	#make sure all desired stimuli are in the pool
 	#array of model numbers
 	var.models=list(range(2,9))+list(range(12,17))
 	#angles of rotation
@@ -785,10 +823,8 @@ define inline_script parameters
 	# 960 is distance to center for sides
 	# for image size 360, subtract half (180) from edges
 	# left align: 780
-	# right align:
-	# 4x320+160=1440
-	# 1440-960=480
-	# 800-480=320
+	# additional distance to fill screen from left to right
+	# 1920-5*360=120
 	#x offset of first image
 	xFirst=-780
 	#additional distance from first image
@@ -809,8 +845,8 @@ define inline_script parameters
 	var.x4B=var.x4-var.lengthBorders/2
 	var.yB=-var.lengthBorders/2
 	#placement of button
-	var.buttonWidth=200
-	var.buttonHeight=50
+	var.buttonWidth=300
+	var.buttonHeight=80
 	var.xbuttonBG=var.x4-var.buttonWidth/2
 	var.yButton=var.distance+var.buttonHeight
 	var.yButtonBG=var.yButton-var.buttonHeight/2
@@ -897,6 +933,20 @@ define logger questionaireLogger
 	log responseModified
 	log aaID
 
+define inline_script setParameters
+	set description "Executes Python code"
+	___run__
+	#set timing options
+	var.endTime=0
+	var.maxDuration=var.maxDurationMins*60*1000
+	#set first index
+	var.stimulusNumber=var.firstIndexOfBlock
+	var.itemNumber=1
+	#time left until end
+	var.timeLeft=getNiceTime(var.maxDuration/1000)
+	__end__
+	set _prepare ""
+
 define inline_script setStartTime
 	set description "Executes Python code"
 	___run__
@@ -911,17 +961,6 @@ define inline_script setStartTime
 		var.endTime=0
 	#note that start time of run phase is set in run part of this script
 	__end__
-
-define inline_script setTime
-	set description "Executes Python code"
-	___run__
-	#set timing options
-	var.endTime=0
-	var.maxDuration=var.maxDurationMins*60*1000
-	#set first index
-	var.stimulusNumber=var.firstIndexOfBlock
-	__end__
-	set _prepare ""
 
 define logger stimulusLogger
 	# log time_Fixation
