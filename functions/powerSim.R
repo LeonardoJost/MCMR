@@ -1,5 +1,5 @@
 ### Power estimation by simulation and comparison of methods
-#     Copyright (C) 2020  Leonardo Jost
+#     Copyright (C) 2021  Leonardo Jost
 # 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,40 +26,40 @@
 #for sd2=0.34 the total standard deviation is sd
 generateData=function(n,N,numberOfEachTrial,sd=0.73,sd2=0.34) {
   testdata=data.frame(ids=as.factor(rep(1:n,each=N/n)),
-                      gender=factor(rep(c("m","f"),each=N/2)),
+                      sex=factor(rep(c("m","f"),each=N/2)),
                       nStimuli=factor(rep(c(2,4,8),N/3)),
                       type=factor(rep(c("type1","type2"),N/2)))
   #get base probabilities for each combination of nStimuli and type
-  # testdata$baseProb=ifelse(testdata$nStimuli==2 & testdata$type=="type1" & testdata$gender=="m",2.20,
-  #                          ifelse(testdata$nStimuli==4 & testdata$type=="type1" & testdata$gender=="m",2.20,
-  #                          ifelse(testdata$nStimuli==8 & testdata$type=="type1" & testdata$gender=="m",2.20,
-  #                          ifelse(testdata$nStimuli==2 & testdata$type=="type2" & testdata$gender=="m",2.20,
-  #                          ifelse(testdata$nStimuli==4 & testdata$type=="type2" & testdata$gender=="m",2.20,
-  #                          ifelse(testdata$nStimuli==8 & testdata$type=="type2" & testdata$gender=="m",2.20,
-  #                          ifelse(testdata$nStimuli==2 & testdata$type=="type1" & testdata$gender=="f",1.93,
-  #                          ifelse(testdata$nStimuli==4 & testdata$type=="type1" & testdata$gender=="f",1.66,
-  #                          ifelse(testdata$nStimuli==8 & testdata$type=="type1" & testdata$gender=="f",1.39,
-  #                          ifelse(testdata$nStimuli==2 & testdata$type=="type2" & testdata$gender=="f",2.20,
-  #                          ifelse(testdata$nStimuli==4 & testdata$type=="type2" & testdata$gender=="f",2.11,
-  #                          ifelse(testdata$nStimuli==8 & testdata$type=="type2" & testdata$gender=="f",2.02,
+  # testdata$baseProb=ifelse(testdata$nStimuli==2 & testdata$type=="type1" & testdata$sex=="m",2.20,
+  #                          ifelse(testdata$nStimuli==4 & testdata$type=="type1" & testdata$sex=="m",2.20,
+  #                          ifelse(testdata$nStimuli==8 & testdata$type=="type1" & testdata$sex=="m",2.20,
+  #                          ifelse(testdata$nStimuli==2 & testdata$type=="type2" & testdata$sex=="m",2.20,
+  #                          ifelse(testdata$nStimuli==4 & testdata$type=="type2" & testdata$sex=="m",2.20,
+  #                          ifelse(testdata$nStimuli==8 & testdata$type=="type2" & testdata$sex=="m",2.20,
+  #                          ifelse(testdata$nStimuli==2 & testdata$type=="type1" & testdata$sex=="f",1.93,
+  #                          ifelse(testdata$nStimuli==4 & testdata$type=="type1" & testdata$sex=="f",1.66,
+  #                          ifelse(testdata$nStimuli==8 & testdata$type=="type1" & testdata$sex=="f",1.39,
+  #                          ifelse(testdata$nStimuli==2 & testdata$type=="type2" & testdata$sex=="f",2.20,
+  #                          ifelse(testdata$nStimuli==4 & testdata$type=="type2" & testdata$sex=="f",2.11,
+  #                          ifelse(testdata$nStimuli==8 & testdata$type=="type2" & testdata$sex=="f",2.02,
   #                          0))))))))))))
-  testdata$baseProb=ifelse(testdata$nStimuli==2 & testdata$type=="type1" & testdata$gender=="m",1.45,
-                    ifelse(testdata$nStimuli==4 & testdata$type=="type1" & testdata$gender=="m",1.45,
-                    ifelse(testdata$nStimuli==8 & testdata$type=="type1" & testdata$gender=="m",1.45,
-                    ifelse(testdata$nStimuli==2 & testdata$type=="type2" & testdata$gender=="m",1.45,
-                    ifelse(testdata$nStimuli==4 & testdata$type=="type2" & testdata$gender=="m",1.45,
-                    ifelse(testdata$nStimuli==8 & testdata$type=="type2" & testdata$gender=="m",1.45,
-                    ifelse(testdata$nStimuli==2 & testdata$type=="type1" & testdata$gender=="f",1.195,
-                    ifelse(testdata$nStimuli==4 & testdata$type=="type1" & testdata$gender=="f",0.94,
-                    ifelse(testdata$nStimuli==8 & testdata$type=="type1" & testdata$gender=="f",0.685,
-                    ifelse(testdata$nStimuli==2 & testdata$type=="type2" & testdata$gender=="f",1.45,
-                    ifelse(testdata$nStimuli==4 & testdata$type=="type2" & testdata$gender=="f",1.365,
-                    ifelse(testdata$nStimuli==8 & testdata$type=="type2" & testdata$gender=="f",1.28,
+  testdata$baseProb=ifelse(testdata$nStimuli==2 & testdata$type=="type1" & testdata$sex=="m",1.45,
+                    ifelse(testdata$nStimuli==4 & testdata$type=="type1" & testdata$sex=="m",1.45,
+                    ifelse(testdata$nStimuli==8 & testdata$type=="type1" & testdata$sex=="m",1.45,
+                    ifelse(testdata$nStimuli==2 & testdata$type=="type2" & testdata$sex=="m",1.45,
+                    ifelse(testdata$nStimuli==4 & testdata$type=="type2" & testdata$sex=="m",1.45,
+                    ifelse(testdata$nStimuli==8 & testdata$type=="type2" & testdata$sex=="m",1.45,
+                    ifelse(testdata$nStimuli==2 & testdata$type=="type1" & testdata$sex=="f",1.195,
+                    ifelse(testdata$nStimuli==4 & testdata$type=="type1" & testdata$sex=="f",0.94,
+                    ifelse(testdata$nStimuli==8 & testdata$type=="type1" & testdata$sex=="f",0.685,
+                    ifelse(testdata$nStimuli==2 & testdata$type=="type2" & testdata$sex=="f",1.45,
+                    ifelse(testdata$nStimuli==4 & testdata$type=="type2" & testdata$sex=="f",1.365,
+                    ifelse(testdata$nStimuli==8 & testdata$type=="type2" & testdata$sex=="f",1.28,
                     0))))))))))))
   #convert to numeric to test for main effects as part of interactions
-  testdata$genderNumeric=sapply(testdata$gender,function(i) contr.helmert(2)[i,])
-  testdata$typeNumeric=sapply(testdata$type,function(i) contr.helmert(2)[i,])
-  nStimuliNumeric=sapply(testdata$nStimuli,function(i) contr.helmert(3)[i,])
+  testdata$sexNumeric=sapply(testdata$sex,function(i) contr.sum(2)[i,])
+  testdata$typeNumeric=sapply(testdata$type,function(i) contr.sum(2)[i,])
+  nStimuliNumeric=sapply(testdata$nStimuli,function(i) contr.sum(3)[i,])
   testdata$nStimuliNumeric1=nStimuliNumeric[1,]
   testdata$nStimuliNumeric2=nStimuliNumeric[2,]
   #get base probability for each participant, corr coeff of .66
@@ -71,7 +71,7 @@ generateData=function(n,N,numberOfEachTrial,sd=0.73,sd2=0.34) {
   #generate number of correct responses
   #note that the binomial distribution adds additional variance of n*p*(1-p)
   #generate number of attempted tasks
-  #do not remove data for unattempted tasks, because unanswered tasks are already included in accuracy
+  #not used, because unanswered tasks are already included in accuracy
   #testdata$weights=replicate(nrow(testdata),sum(runif(numberOfEachTrial)>0.3))
   testdata$weights=rep(numberOfEachTrial,N)
   #generate correct responses
@@ -81,23 +81,23 @@ generateData=function(n,N,numberOfEachTrial,sd=0.73,sd2=0.34) {
 
 #get p values of effects of interest
 getSignificant=function(testdata){
-  glmerModel=glmer(correctResponses~genderNumeric*nStimuliNumeric1*typeNumeric+genderNumeric*nStimuliNumeric2*typeNumeric+(1|ids),
+  glmerModel=glmer(correctResponses~sexNumeric*nStimuliNumeric1*typeNumeric+sexNumeric*nStimuliNumeric2*typeNumeric+(1|ids),
                     family=binomial(),data=testdata,weights=weights,
                     control = glmerControl(optimizer = "optimx",optCtrl = list(method = "bobyqa")))
-  glmerModel1=update(glmerModel,formula = ~. -genderNumeric:nStimuliNumeric1:typeNumeric-genderNumeric:nStimuliNumeric2:typeNumeric)
-  glmerModel2=update(glmerModel,formula = ~. -genderNumeric:nStimuliNumeric1-genderNumeric:nStimuliNumeric2)
-  glmerModel3=update(glmerModel,formula = ~. -genderNumeric:typeNumeric)
+  glmerModel1=update(glmerModel,formula = ~. -sexNumeric:nStimuliNumeric1:typeNumeric-sexNumeric:nStimuliNumeric2:typeNumeric)
+  glmerModel2=update(glmerModel,formula = ~. -sexNumeric:nStimuliNumeric1-sexNumeric:nStimuliNumeric2)
+  glmerModel3=update(glmerModel,formula = ~. -sexNumeric:typeNumeric)
   return(c(anova(glmerModel,glmerModel1)$"Pr(>Chisq)"[2],
            anova(glmerModel,glmerModel2)$"Pr(>Chisq)"[2],
            anova(glmerModel,glmerModel3)$"Pr(>Chisq)"[2]))
 }
 getSignificantLmer=function(testdata){
-  lmerModel=lmer(logOdds~genderNumeric*nStimuliNumeric1*typeNumeric+genderNumeric*nStimuliNumeric2*typeNumeric+(1|ids),
+  lmerModel=lmer(logOdds~sexNumeric*nStimuliNumeric1*typeNumeric+sexNumeric*nStimuliNumeric2*typeNumeric+(1|ids),
                    data=testdata,REML=FALSE,
                    control = lmerControl(optimizer = "optimx",optCtrl = list(method = "bobyqa")))
-  lmerModel1=update(lmerModel,formula = ~. -genderNumeric:nStimuliNumeric1:typeNumeric-genderNumeric:nStimuliNumeric2:typeNumeric)
-  lmerModel2=update(lmerModel,formula = ~. -genderNumeric:nStimuliNumeric1-genderNumeric:nStimuliNumeric2)
-  lmerModel3=update(lmerModel,formula = ~. -genderNumeric:typeNumeric)
+  lmerModel1=update(lmerModel,formula = ~. -sexNumeric:nStimuliNumeric1:typeNumeric-sexNumeric:nStimuliNumeric2:typeNumeric)
+  lmerModel2=update(lmerModel,formula = ~. -sexNumeric:nStimuliNumeric1-sexNumeric:nStimuliNumeric2)
+  lmerModel3=update(lmerModel,formula = ~. -sexNumeric:typeNumeric)
   return(c(anova(lmerModel,lmerModel1)$"Pr(>Chisq)"[2],
            anova(lmerModel,lmerModel2)$"Pr(>Chisq)"[2],
            anova(lmerModel,lmerModel3)$"Pr(>Chisq)"[2]))
@@ -113,7 +113,7 @@ randSim=function(ns,linear=TRUE,numberOfEachTrials=c(1),reps=1000,sd=0.73,sd2=0.
   #loop over number of participants
   significantDataFrame=data.frame(numberOfEachTrial=rep(numberOfEachTrials,each=3*length(ns)),
                                   n=rep(ns,each=3*numTrials),
-                                  effects=rep(c("gender*nStimuli*type","gender*nStimuli","gender*type"),length(ns)*numTrials),
+                                  effects=rep(c("sex*nStimuli*type","sex*nStimuli","sex*type"),length(ns)*numTrials),
                                   propSignificant=rep(0,length(ns)*3*numTrials))
   for(numberOfEachTrial in numberOfEachTrials){
     for(n in ns) {
@@ -131,11 +131,11 @@ randSim=function(ns,linear=TRUE,numberOfEachTrials=c(1),reps=1000,sd=0.73,sd2=0.
         }
       }
       #save proportion to data frame
-      significantDataFrame$propSignificant[which(significantDataFrame$numberOfEachTrial==numberOfEachTrial & significantDataFrame$n==n & significantDataFrame$effects=="gender*nStimuli*type")]=
+      significantDataFrame$propSignificant[which(significantDataFrame$numberOfEachTrial==numberOfEachTrial & significantDataFrame$n==n & significantDataFrame$effects=="sex*nStimuli*type")]=
         sum(significant[,1])/reps
-      significantDataFrame$propSignificant[which(significantDataFrame$numberOfEachTrial==numberOfEachTrial & significantDataFrame$n==n & significantDataFrame$effects=="gender*nStimuli")]=
+      significantDataFrame$propSignificant[which(significantDataFrame$numberOfEachTrial==numberOfEachTrial & significantDataFrame$n==n & significantDataFrame$effects=="sex*nStimuli")]=
         sum(significant[,2])/reps
-      significantDataFrame$propSignificant[which(significantDataFrame$numberOfEachTrial==numberOfEachTrial & significantDataFrame$n==n & significantDataFrame$effects=="gender*type")]=
+      significantDataFrame$propSignificant[which(significantDataFrame$numberOfEachTrial==numberOfEachTrial & significantDataFrame$n==n & significantDataFrame$effects=="sex*type")]=
         sum(significant[,3])/reps
     }
   }
@@ -145,15 +145,15 @@ randSim=function(ns,linear=TRUE,numberOfEachTrials=c(1),reps=1000,sd=0.73,sd2=0.
 #calculate cohens d for logarithmic odds and simulated responses
 getCohensDs=function(testdata,typ,nStim){
   #print(paste(typ,nStim,sep=","))
-  meanM=mean(testdata$logOdds[which(testdata$nStimuli==nStim & testdata$gender=="m" & testdata$type==typ)],na.rm=T)
-  meanF=mean(testdata$logOdds[which(testdata$nStimuli==nStim & testdata$gender=="f" & testdata$type==typ)],na.rm=T)
-  sdM=sd(testdata$logOdds[which(testdata$nStimuli==nStim & testdata$gender=="m" & testdata$type==typ)],na.rm=T)
-  sdF=sd(testdata$logOdds[which(testdata$nStimuli==nStim & testdata$gender=="f" & testdata$type==typ)],na.rm=T)
+  meanM=mean(testdata$logOdds[which(testdata$nStimuli==nStim & testdata$sex=="m" & testdata$type==typ)],na.rm=T)
+  meanF=mean(testdata$logOdds[which(testdata$nStimuli==nStim & testdata$sex=="f" & testdata$type==typ)],na.rm=T)
+  sdM=sd(testdata$logOdds[which(testdata$nStimuli==nStim & testdata$sex=="m" & testdata$type==typ)],na.rm=T)
+  sdF=sd(testdata$logOdds[which(testdata$nStimuli==nStim & testdata$sex=="f" & testdata$type==typ)],na.rm=T)
   valueLogOdds=(meanM-meanF)/(sqrt((sdM^2+sdF^2)/2))
-  meanM=mean(testdata$correctResponses[which(testdata$nStimuli==nStim & testdata$gender=="m" & testdata$type==typ)],na.rm=T)
-  meanF=mean(testdata$correctResponses[which(testdata$nStimuli==nStim & testdata$gender=="f" & testdata$type==typ)],na.rm=T)
-  sdM=sd(testdata$correctResponses[which(testdata$nStimuli==nStim & testdata$gender=="m" & testdata$type==typ)],na.rm=T)
-  sdF=sd(testdata$correctResponses[which(testdata$nStimuli==nStim & testdata$gender=="f" & testdata$type==typ)],na.rm=T)
+  meanM=mean(testdata$correctResponses[which(testdata$nStimuli==nStim & testdata$sex=="m" & testdata$type==typ)],na.rm=T)
+  meanF=mean(testdata$correctResponses[which(testdata$nStimuli==nStim & testdata$sex=="f" & testdata$type==typ)],na.rm=T)
+  sdM=sd(testdata$correctResponses[which(testdata$nStimuli==nStim & testdata$sex=="m" & testdata$type==typ)],na.rm=T)
+  sdF=sd(testdata$correctResponses[which(testdata$nStimuli==nStim & testdata$sex=="f" & testdata$type==typ)],na.rm=T)
   valueResponses=(meanM-meanF)/(sqrt((sdM^2+sdF^2)/2))
 return(c(valueLogOdds,valueResponses))
 }
@@ -226,8 +226,10 @@ write.table(significantDataFrame,file="simulPowerTrials.csv",sep=";", row.names 
 set.seed(99261)
 numberOfEachTrials=c(8,12,16,24,32,48)
 cohensDsDataFrame=cohensDsim(ns=c(100),numberOfEachTrials,1000,0.73,0)
+#rename
+cohensDsDataFrame$values=ifelse(cohensDsDataFrame$probType=="logOdds","base probability(log odds)","binomially distributed responses")
 #plot by number of trials
-ggplot(cohensDsDataFrame,aes(x=numberOfEachTrial,y=value,color=probType)) +
+ggplot(cohensDsDataFrame,aes(x=numberOfEachTrial,y=value,color=values)) +
   geom_point() + geom_line() + labs(y="simulated cohens d") +
   scale_x_continuous(breaks = numberOfEachTrials) +
   theme_classic()
