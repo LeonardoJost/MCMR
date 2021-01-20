@@ -1,5 +1,5 @@
 ### Estimate single item accuracy from multiple scores
-#     Copyright (C) 2020  Leonardo Jost
+#     Copyright (C) 2021  Leonardo Jost
 # 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,16 +19,18 @@ numberOfTrials=c(12,12,
                  1,1,
                  24,24,
                  1,1,
+                 1,1,
                  24,24,
                  24,24,
                  24,24,
                  1,1,
                  24,24,
                  1,1)
-correctTrials=c(3.85,6.74,
-                0.48,0.71,
+correctTrials=c(6.74,3.85,
+                0.71,0.48,
                 20.76,18.91,
-                0.47,0.81,
+                0.65,0.81,
+                0.47,0.66,
                 12.34,9.57,
                 12.83,8.15,
                 12.6,8.8,

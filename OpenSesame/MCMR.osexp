@@ -44,6 +44,7 @@ define sequence BlockSequence
 	run waitFixedDuration always
 	run ShowInstructions always
 	run InstructionsMouseResponse always
+	run mouseFix always
 	run setParameters always
 	run ShowStimuli always
 
@@ -64,6 +65,7 @@ define loop Blocks
 	setcycle 0 feedback 1
 	setcycle 0 maxNumberStimuli 3
 	setcycle 0 firstIndexOfBlock 0
+	setcycle 0 helpMessageActive 1
 	setcycle 1 aaBlock main1
 	setcycle 1 instructions "Instructions.txt"
 	setcycle 1 maxDurationMins 3
@@ -71,6 +73,7 @@ define loop Blocks
 	setcycle 1 feedback 0
 	setcycle 1 maxNumberStimuli 14
 	setcycle 1 firstIndexOfBlock 3
+	setcycle 1 helpMessageActive 0
 	setcycle 2 aaBlock main2
 	setcycle 2 instructions "Instructions2.txt"
 	setcycle 2 maxDurationMins 3
@@ -78,6 +81,7 @@ define loop Blocks
 	setcycle 2 feedback 0
 	setcycle 2 maxNumberStimuli 14
 	setcycle 2 firstIndexOfBlock 17
+	setcycle 2 helpMessageActive 0
 	setcycle 3 aaBlock main3
 	setcycle 3 instructions "Instructions3.txt"
 	setcycle 3 maxDurationMins 3
@@ -85,6 +89,7 @@ define loop Blocks
 	setcycle 3 feedback 0
 	setcycle 3 maxNumberStimuli 14
 	setcycle 3 firstIndexOfBlock 31
+	setcycle 3 helpMessageActive 0
 	setcycle 4 aaBlock main4
 	setcycle 4 instructions "Instructions4.txt"
 	setcycle 4 maxDurationMins 3
@@ -92,6 +97,7 @@ define loop Blocks
 	setcycle 4 feedback 0
 	setcycle 4 maxNumberStimuli 14
 	setcycle 4 firstIndexOfBlock 45
+	setcycle 4 helpMessageActive 0
 	run BlockSequence
 
 define sequence Consent
@@ -130,7 +136,7 @@ define sketchpad Fixation
 define inline_script GetClicked
 	set description "Executes Python code"
 	___run__
-	#check which item has been clicked and mark item
+	#check which item has been clicked and mark item (if time is still within limits)
 	#or if next button has been clicked
 	#items should not be overlapping
 	if u'next' in var.cursor_roi or var.endTime>var.maxDuration:
@@ -179,17 +185,13 @@ define inline_script GetClicked
 define inline_script GetResults
 	set description "Executes Python code"
 	___run__
-	#show mouse
-	my_mouse = Mouse()
-	my_mouse.show_cursor(show=True)
 	#parameters for logging
 	#stimuli which should have been selected
-	var.correctStimuli=[var.correct0,var.correct1,var.correct2,var.correct3, var.correct4,var.correct5,var.correct6,var.correct7]
+	var.correctStimuli=[var.correct0,var.correct1,var.correct2,var.correct3, var.correct4,var.correct5,var.correct6,var.correct7][0:var.nStimuli]
 	#selected stimuli
-	var.answers=[var.show0,var.show1,var.show2,var.show3, var.show4,var.show5,var.show6,var.show7]
+	var.answers=[var.show0,var.show1,var.show2,var.show3, var.show4,var.show5,var.show6,var.show7][0:var.nStimuli]
 	var.correctAnswers=[int(var.correctStimuli[i]==var.answers[i]) for i in range(var.nStimuli)]
 	var.sumCorrect=sum(var.correctAnswers)
-	#print(var.sumCorrect)
 	__end__
 	set _prepare ""
 
@@ -205,7 +207,7 @@ define mouse_response InstructionsMouseResponse
 define notepad License
 	__note__
 	### Multiple Choice Mental Rotation experiment
-	#     Copyright (C) 2020  Leonardo Jost
+	#     Copyright (C) 2021  Leonardo Jost
 	# 
 	# This program is free software: you can redistribute it and/or modify
 	# it under the terms of the GNU General Public License as published by
@@ -227,6 +229,7 @@ define sequence QuestionSequence
 	set description "Runs a number of items in sequence"
 	run prepareQuestion always
 	run ShowForm always
+	run mouseFix always
 	run questionaireLogger always
 
 define sequence QuestionSequence_1
@@ -234,6 +237,7 @@ define sequence QuestionSequence_1
 	set description "Runs a number of items in sequence"
 	run prepareQuestion always
 	run ShowForm always
+	run mouseFix always
 
 define sequence Questionaire
 	set flush_keyboard yes
@@ -382,8 +386,6 @@ define inline_script SetNamesAndResponses
 	    var.yOffset=var.distance/2
 	var.yBorderTop=var.yB-var.yOffset
 	var.yBorderBottom=var.yB+var.yOffset 
-	#reset error message
-	var.error=u''
 	#choose targets depending on rotation of stimulus
 	if var.angle in var.uprightAngles:
 		#randomize orientation of figures
@@ -542,6 +544,7 @@ define sequence ShowStimuliSequence
 	run ShowStimulus always
 	run ShowStimulusLoop never
 	run Fixation always
+	run mouseFix always
 	run GetResults always
 	run stimulusLogger always
 	run calculateDuration always
@@ -549,11 +552,15 @@ define sequence ShowStimuliSequence
 define inline_script ShowStimulus
 	set description "Executes Python code"
 	___run__
+	#update time only between trials, not every click
+	var.timeLeft=getNiceTime((var.maxDuration-var.endTime)/1000)
+	timeSinceStartOfBlock=0
 	#update clicked figures until next button is clicked
-	while var.nextButton==0 and var.endTime<=var.maxDuration:
-		var.timeLeft=getNiceTime((var.maxDuration-var.endTime)/1000)
+	while var.nextButton==0 and timeSinceStartOfBlock<=var.maxDuration:
 		var.itemNumber=var.stimulusNumber-var.firstIndexOfBlock
 		items.execute(u'ShowStimulusLoop')
+		timeSinceStartOfBlock=self.time()-var.startTimeOfBlock
+	var.reactionTime=self.time()-var.startTimeOfTask-var.startTimeOfBlock
 	__end__
 	set _prepare ""
 
@@ -562,6 +569,7 @@ define sequence ShowStimulusLoop
 	set description "Runs a number of items in sequence"
 	run Stimulus always
 	run mouseResponse always
+	run mouseFix always
 	run GetClicked always
 
 define sketchpad Stimulus
@@ -600,6 +608,7 @@ define sketchpad Stimulus
 	draw textline center=1 color=black font_bold=no font_family=sans font_italic=no font_size=24 html=yes name=next show_if=always text="[nextButtonText]" x="[x4]" y="[yButton]" z_index=1
 	draw textline center=1 color=white font_bold=no font_family=sans font_italic=no font_size=24 html=yes show_if=always text="Aufgabe: [itemNumber]/[maxNumberStimuli]" x="[x0]" y="-[yButton]" z_index=1
 	draw textline center=1 color=white font_bold=no font_family=sans font_italic=no font_size=24 html=yes name=timeField show_if=always text="verbleibende Zeit: [timeLeft]" x="[x4]" y="-[yButton]" z_index=1
+	draw textline center=1 color=white font_bold=no font_family=sans font_italic=no font_size=24 html=yes name=helpField show_if=always text="[helpText]" x=0 y="-[yButton]" z_index=1
 	draw image center=1 file="[comparisonFile]" name=base scale=1 show_if=always x="[x0]" y=0 z_index=0
 	draw image center=1 file="[target0File]" name=target0 scale=1 show_if="[nStimuli]>0" x="[x1]" y="-[yOffset]" z_index=0
 	draw image center=1 file="[target1File]" name=target1 scale=1 show_if="[nStimuli]>1" x="[x2]" y="-[yOffset]" z_index=0
@@ -706,8 +715,7 @@ define inline_script calculateDuration
 	#note that feedback for other trials is shown in prepare phase of this script
 	__end__
 	___prepare__
-	#and show feedback/fixation of previous trial for approximately the correct time
-	#print(var.endTime-self.time()+var.startTimeOfBlock)
+	#show feedback/fixation of previous trial for approximately the correct time
 	clock.sleep(var.endTime-self.time()+var.startTimeOfBlock)
 	#note that exit condition is checked in run phase of this script
 	__end__
@@ -742,6 +750,15 @@ define inline_script functions
 	    mins=u'0' if timeMins<10 else u''
 	    secs=u'0' if timeSeconds<10 else u''
 	    return(mins+str(timeMins)+u':'+secs+str(timeSeconds))
+	__end__
+	set _prepare ""
+
+define inline_script mouseFix
+	set description "Führt Python Code aus"
+	___run__
+	#show mouse and prevent returning to center
+	my_mouse = Mouse()
+	my_mouse.show_cursor(show=True)
 	__end__
 	set _prepare ""
 
@@ -802,6 +819,8 @@ define inline_script parameters
 	##error message when not half of stimuli are selected
 	var.errorMessage=u'Sie müssen die Hälfte\nder Figuren auswählen'
 	var.continueMessage=u'Weiter'
+	##help message for practice trials
+	var.helpMessage=u'Links sehen Sie, welche Aufgabe Sie gerade bearbeiten.\nRechts sehen Sie die verbleibende Zeit (seit Start der aktuellen Aufgabe).\n\nWählen Sie die Hälfte der Vergleichsobjekte aus, \ndie sich durch eine Drehung in das Objekt auf der linken Seite überführen lassen.\nDie andere Hälfte der Vergleichsobjekte ist gespiegelt.'
 	##stimulus generation
 	#make sure all desired stimuli are in the pool
 	#array of model numbers
@@ -944,6 +963,10 @@ define inline_script setParameters
 	var.itemNumber=1
 	#time left until end
 	var.timeLeft=getNiceTime(var.maxDuration/1000)
+	if var.helpMessageActive==1:
+	    var.helpText=var.helpMessage
+	else:
+	    var.helpText=u''
 	__end__
 	set _prepare ""
 
@@ -951,7 +974,7 @@ define inline_script setStartTime
 	set description "Executes Python code"
 	___run__
 	#start time of run phase (after preparation)
-	var.duration=self.time()-var.startTimeOfBlock
+	var.startTimeOfTask=self.time()-var.startTimeOfBlock
 	#note that parameters of first loop are set in prepare phase of this script
 	__end__
 	___prepare__
@@ -970,8 +993,6 @@ define logger stimulusLogger
 	log angle
 	log orientation
 	log aaBlock
-	log time_Stimulus
-	log duration
 	log aaID
 	log nStimuli
 	log correctStimuli
@@ -979,6 +1000,8 @@ define logger stimulusLogger
 	log correctAnswers
 	log sumCorrect
 	log anglesArray
+	log reactionTime
+	log startTimeOfTask
 
 define inline_script waitFixedDuration
 	set description "Executes Python code"
