@@ -58,7 +58,17 @@ stringToNum=function(vec){
       vec[i]=as.numeric(temp[1])/as.numeric(temp[2])
     }
   }
+  vec=gsub("\\D+", "", vec)
   return(as.numeric(vec))
+}
+
+stringToNumArray=function(vec){
+  #remove brackets
+  vec=gsub("\\[|\\]", "",vec)
+  #split by commas
+  vec=strsplit(vec,", ")
+  vec=lapply(vec, function(x) as.numeric(unlist(x)))
+  return(vec)
 }
 
 #remove digits from string, trim to length set by trim
@@ -131,16 +141,13 @@ getHandedness=function(verbose,dat,startIndex, numberOfCriteria) {
 
 #clean questionaire Data
 cleanData=function(dat,toFirstChars,toNums,cleanWhiteSpaces) {
-  for(toFirstChar in toFirstChars)
-  {
+  for(toFirstChar in toFirstChars){
     dat[,toFirstChar]=substr(toChar(dat[,toFirstChar]),1,1)
   }
-  for(toNum in toNums)
-  {
+  for(toNum in toNums){
     dat[,toNum]=stringToNum(dat[,toNum])
   }
-  for(cleanWhiteSpace in cleanWhiteSpaces)
-  {
+  for(cleanWhiteSpace in cleanWhiteSpaces){
     dat[,cleanWhiteSpace]=trimws(dat[,cleanWhiteSpace])
   }
   return(dat)
