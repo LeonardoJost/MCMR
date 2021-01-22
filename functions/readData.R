@@ -1,5 +1,5 @@
-### Read mental rotation data
-#     Copyright (C) 2020  Leonardo Jost
+### Functions to read and modify data
+#     Copyright (C) 2021  Leonardo Jost
 # 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,21 +15,19 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 source("functions/helpers.R")
-source("functions/readDataOpenSesame.R", encoding="utf-8")
-source("functions/calculateData.R", encoding="utf-8")
 
-#get questionaireData
+#get questionnaireData
 #verbose: detail of output
 #folder: folder to search in for data
-getQuestionaireData=function(verbose,folder){
+getQuestionnaireData=function(verbose,folder){
   if (verbose>1) {
-    print("Reading questionaire data from files ...")
+    print("Reading questionnaire data from files ...")
   }
-  questionaireData=getOpenSesameQuestionaireData(verbose,folder, preText="", part="questionaire",ending="csv")
+  questionnaireData=getQuestionnaireDataOpenSesame(verbose,folder, preText="", c("questionaire","questionnaire"),ending="csv")
   if (verbose>1) {
-    print(paste("Questionaire data from",nrow(questionaireData),"participants was read."))
+    print(paste("Questionnaire data from",nrow(questionnaireData),"participants was read."))
   }
-  return(questionaireData)
+  return(questionnaireData)
 }
 
 #get mental rotation data
@@ -40,24 +38,27 @@ getMRData=function(verbose,folder,block="main"){
   if (verbose>1) {
     print(paste("Reading mental rotation data for block",block,"from files"))
   }
-  MRData=getOpenSesameMRData(verbose,folder,part=block)
+  MRData=getDataOpenSesame(verbose,folder,part=block)
   if (verbose>1) {
     print(paste("Mental rotation data from",length(unique(MRData$ID)),"participants was read. (",nrow(MRData),"trials in total)"))
   }
   return(MRData)
 }
 
-#modifies the questionairedata, calculates some additional information
-#questionaireData: dataset
-modifyQuestionaireData=function(questionaireData) {
+#modifies the questionnairedata, calculates some additional information
+#questionnaireData: dataset
+modifyQuestionnaireData=function(questionnaireData,toFirstChars,toNums,cleanWhiteSpaces) {
   if (verbose>1) {
-    print("Doing calculations on questionaire data ...")
+    print("Doing calculations on questionnaire data ...")
   }
-  questionaireData=modifyOpenSesameQuestionaireData(questionaireData)
+  #transform values to numeric, remove white spaces, unify gender
+  questionnaireData=cleanData(questionnaireData,toFirstChars,toNums,cleanWhiteSpaces)
+  #rename columns to different names
+  #colnames(questionnaireData) = make.unique(names(questionnaireData))
   if (verbose>1) {
-    print("Calculations on questionaire data finished.")
+    print("Calculations on questionnaire data finished.")
   }
-  return(questionaireData)
+  return(questionnaireData)
 }
 
 #modifies the mental rotation data, calculates some additional information
@@ -113,4 +114,81 @@ modifyMRData=function(verbose,MRData) {
   #drop mirrored stimuli
   MRData=MRData[MRData$stimulusCorrect==1,]
   return(MRData)
+}
+
+#reads data from files
+#verbose: detail of output
+#folder: folder to search in for files
+#preText: Filter, only get files which start with preText
+#part: Filter, only get parts of data in blocks whose name matches part
+#ending: filetype of files
+getDataOpenSesame=function(verbose, folder, preText="", part="main",ending="csv") {
+  #get files in folger (Reaction Time Data)
+  fileNames=getFileNames(folder,preText,ending)
+  if (verbose>2) {
+    print("list of files:\n")
+    print(fileNames)
+  }
+  #initialize empty dataframe
+  dat=data.frame()
+  #loop through all files
+  for (fileIndex in 1:length(fileNames)) {
+    fileName=fileNames[fileIndex]
+    #read data in file as table
+    rawData=read.csv(paste(folder,fileName,sep=""),header=TRUE,fill=TRUE, sep=",")
+    #choose only specified block
+    dataset=rawData[rawData$aaBlock %in% part,]
+    dataset$numberInBlock=ave(dataset[,1],                 # Create numbering variable
+                              dataset$aaBlock,
+                              FUN = seq_along)
+    if (verbose>3) {
+      print(paste("read", nrow(dataset), "values from file:",fileName,"\n"))
+    }
+    #add to dataset
+    dat=rbind(dat,dataset)
+  }
+  #change names
+  dat$block=dat$aaBlock
+  dat$ID=dat$aaID
+  dat$aaBlock=NULL
+  dat$aaID=NULL
+  return(dat)
+}
+
+#reads data from files
+#verbose: detail of output
+#folder: folder to search in for files
+#preText: Filter, only get files which start with preText
+#part: Filter, only get parts of data in blocks whose name matches part
+#ending: filetype of files
+getQuestionnaireDataOpenSesame=function(verbose, folder, preText="", part=c("questionaire","questionnaire"),ending="csv") {
+  #get files in folder
+  fileNames=getFileNames(folder,preText,ending)
+  if (verbose>2) {
+    print("list of files:\n")
+    print(fileNames)
+  }
+  #initialize empty dataframe
+  dat=data.frame()
+  #loop through all files
+  for (fileIndex in 1:length(fileNames)) {
+    fileName=fileNames[fileIndex]
+    #read data in file as table
+    rawData=read.csv(paste(folder,fileName,sep=""),header=TRUE,fill=TRUE, sep=",")
+    #choose only specified block
+    dataset=rawData[rawData$aaBlock %in% part,]
+    #add interesting data to vector 
+    values=append(toChar(dataset[,3]),dataset$aaID[1])
+    if (verbose>3) {
+      print(paste("read values for file:",fileName,"\n"))
+      print(values)
+    }
+    #add to dataset
+    dat=rbind(dat,values,stringsAsFactors = FALSE)
+    #set names according to questionIDs
+    if (fileIndex==1) {
+      names(dat)=append(toChar(dataset[,4]),"ID")
+    }
+  }
+  return(dat)
 }

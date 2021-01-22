@@ -5,7 +5,7 @@ Platform: nt
 ---
 set width 1920
 set uniform_coordinates yes
-set title "Mental Rotation with 3 figures"
+set title "Multiple Choice Mental Rotation"
 set subject_parity even
 set subject_nr 0
 set start experiment
@@ -230,7 +230,7 @@ define sequence QuestionSequence
 	run prepareQuestion always
 	run ShowForm always
 	run mouseFix always
-	run questionaireLogger always
+	run questionnaireLogger always
 
 define sequence QuestionSequence_1
 	set flush_keyboard yes
@@ -239,7 +239,7 @@ define sequence QuestionSequence_1
 	run ShowForm always
 	run mouseFix always
 
-define sequence Questionaire
+define sequence Questionnaire
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
 	run ReadQuestions always
@@ -306,11 +306,11 @@ define inline_script ReadInstructions
 define inline_script ReadQuestions
 	set description "Executes Python code"
 	___run__
-	with open(pool[var.questionaireFile], encoding="utf-8-sig") as file:
+	with open(pool[var.questionnaireFile], encoding="utf-8-sig") as file:
 		var.questionsText = file.readlines()
 	var.numberOfQuestions=len(var.questionsText)
 	var.questionNumber=0
-	var.aaBlock=u'questionaire'
+	var.aaBlock=u'questionnaire'
 	var.answerList=list()
 	var.showQuestion=1  #true is converted to yes, use 0/1 instead
 	var.form_response=u''
@@ -731,7 +731,7 @@ define sequence experiment
 	run SetLogfile always
 	run Consent always
 	run Blocks always
-	run Questionaire always
+	run Questionnaire always
 
 define inline_script functions
 	set description "Executes Python code"
@@ -806,14 +806,14 @@ define inline_script parameters
 	#minimum duration of instructions in ms
 	var.instructionDuration=1000
 	var.instructionFontSize=24
-	##questionaire: 
+	##questionnaire: 
 	#option to avoid question
 	var.avoidQuestionsPossible=0
 	var.avoidQuestion=u'keine Angabe'
 	#file containing consent
 	var.consentFile=u'Consent.txt'
 	#file containing questions
-	var.questionaireFile=u'Fragebogen.txt'
+	var.questionnaireFile=u'Fragebogen.txt'
 	#added message if no answer is given
 	var.noAnswerError=u'\n\nBitte geben Sie eine Antwort ein'
 	##error message when not half of stimuli are selected
@@ -944,7 +944,7 @@ define inline_script prepareQuestion
 	var.thisQuestion=thisQuestionRest.replace(u'--',u'\n')
 	__end__
 
-define logger questionaireLogger
+define logger questionnaireLogger
 	set description "Logs experimental data"
 	set auto_log no
 	log aaBlock

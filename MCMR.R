@@ -28,26 +28,32 @@ options(digits=6)
 #set data folder
 folder="data\\test\\"
 verbose=3 #detail of output
-questionaireOutFile="output\\questionaire" #.csv added at end, leave empty if no output desired
+questionnaireOutFile="output\\questionnaire" #.csv added at end, leave empty if no output desired
 outlierFactor=3 #factor of sd to define outliers in MR
 block=c("main1","main2","main3","main4")#name of interesting block of data
-questionaireDataCols=c("ID","Gender") #which questionaire columns shall be kept for statistical analysis
+questionnaireDataCols=c("ID","Gender") #which questionnaire columns shall be kept for statistical analysis
 
 ##read and write data
 #read data
-questionaireData=getQuestionaireData(verbose,folder)
+questionnaireData=getQuestionnaireData(verbose,folder)
 MRData=getMRData(verbose,folder,block)
-#modify data 
-questionaireData=modifyQuestionaireData(questionaireData)
+#modify/clean data 
+questionnaireData=modifyQuestionnaireData(questionnaireData,c("Gender"),c("Age"),c())
 MRData=modifyMRData(verbose,MRData)
 
-#calculate means from questionaire (and save to csv)
-calculateMeansQuestionaire(verbose,questionaireData,questionaireOutFile,"")
-#remove not analyzed questionaire data to protect participant identity
-questionaireData=subset(questionaireData,select=questionaireDataCols)
+#calculate means from questionnaire (and save to csv)
+calculateMeansQuestionnaire(verbose,questionnaireData,questionnaireOutFile,"")
+#remove not analyzed questionnaire data to protect participant identity
+questionnaireData=subset(questionnaireData,select=questionnaireDataCols)
 
 #unify data
-dataset=merge(MRData,questionaireData,by="ID")
+dataset=merge(MRData,questionnaireData,by="ID")
 #anonymise IDs to protect participant identity
 dataset$ID=as.factor(dataset$ID)
 levels(dataset$ID)=paste("id",sample.int(length(levels(dataset$ID))),sep="")
+
+#save full dataset to csv
+write.table(dataset,file="output\\dataset.csv",sep=";", row.names = F)
+
+##create datasets for analysis and plot reaction time and accuracy by interesting conditions
+source("functions/createDatasets.R", encoding="utf-8")
