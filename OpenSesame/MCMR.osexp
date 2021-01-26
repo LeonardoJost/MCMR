@@ -1,6 +1,6 @@
 ---
 API: 2.1
-OpenSesame: 3.3.3
+OpenSesame: 3.3.6
 Platform: nt
 ---
 set width 1920
@@ -26,7 +26,7 @@ set font_size 24
 set font_italic no
 set font_family sans
 set font_bold no
-set experiment_path "C:\\Users\\LocalAdmin\\Documents\\Programmierung\\R\\MCMR\\OpenSesame"
+set experiment_path "C:\\Users\\LocalAdmin\\Documents\\Programmierung\\Leo\\MCMR\\OpenSesame"
 set disable_garbage_collection yes
 set description "The main experiment item"
 set coordinates uniform
@@ -192,6 +192,8 @@ define inline_script GetResults
 	var.answers=[var.show0,var.show1,var.show2,var.show3, var.show4,var.show5,var.show6,var.show7][0:var.nStimuli]
 	var.correctAnswers=[int(var.correctStimuli[i]==var.answers[i]) for i in range(var.nStimuli)]
 	var.sumCorrect=sum(var.correctAnswers)
+	#trim angles array to used angles for logging
+	var.anglesArray=var.anglesArray[0:var.nStimuli]
 	__end__
 	set _prepare ""
 
@@ -1002,6 +1004,7 @@ define logger stimulusLogger
 	log anglesArray
 	log reactionTime
 	log startTimeOfTask
+	log itemNumber
 
 define inline_script waitFixedDuration
 	set description "Executes Python code"

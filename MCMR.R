@@ -25,20 +25,21 @@ dir.create("figs/MR")
 
 ##options, parameters
 options(digits=6)
+software=("OSWeb") #OSWeb or OpenSesame (classic)
 #set data folder
-folder="data\\test\\"
+folder="data\\testJatos\\"
 verbose=3 #detail of output
 questionnaireOutFile="output\\questionnaire" #.csv added at end, leave empty if no output desired
 outlierFactor=3 #factor of sd to define outliers in MR
-block=c("main1","main2","main3","main4")#name of interesting block of data
-questionnaireDataCols=c("ID","Gender") #which questionnaire columns shall be kept for statistical analysis
+block=c("main1","main2","main3","main4","main5","main6")#name of interesting block of data
+questionnaireDataCols=c("ID","Gender","STEM","Experience") #which questionnaire columns shall be kept for statistical analysis
 
 ##read and write data
 #read data
-questionnaireData=getQuestionnaireData(verbose,folder)
-MRData=getMRData(verbose,folder,block)
+questionnaireData=getQuestionnaireData(software,verbose,folder)
+MRData=getMRData(software,verbose,folder,block)
 #modify/clean data 
-questionnaireData=modifyQuestionnaireData(questionnaireData,c("Gender"),c("Age"),c())
+questionnaireData=modifyQuestionnaireData(questionnaireData,c("Gender"),c(),c())
 MRData=modifyMRData(verbose,MRData)
 
 #calculate means from questionnaire (and save to csv)

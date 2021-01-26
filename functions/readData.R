@@ -19,11 +19,19 @@ source("functions/helpers.R")
 #get questionnaireData
 #verbose: detail of output
 #folder: folder to search in for data
-getQuestionnaireData=function(verbose,folder){
+getQuestionnaireData=function(software,verbose,folder){
   if (verbose>1) {
     print("Reading questionnaire data from files ...")
   }
-  questionnaireData=getQuestionnaireDataOpenSesame(verbose,folder, preText="", c("questionaire","questionnaire"),ending="csv")
+  if (software=="OSWeb"){
+    questionnaireData=getDataOSWeb(verbose,folder,part="questionnaire")
+    questionnaireData=subset(questionnaireData,select=c("ID","questionID","answer"))
+    questionnaireData=reshape(questionnaireData, idvar = "ID", timevar = "questionID", direction = "wide")
+    names(questionnaireData)=gsub("answer.","",names(questionnaireData))
+    
+  }else if (software=="OpenSesame"){
+    questionnaireData=getQuestionnaireDataOpenSesame(verbose,folder, preText="", c("questionaire","questionnaire"),ending="csv")
+  }
   if (verbose>1) {
     print(paste("Questionnaire data from",nrow(questionnaireData),"participants was read."))
   }
@@ -34,11 +42,15 @@ getQuestionnaireData=function(verbose,folder){
 #verbose: detail of output
 #folder: folder to search in for data
 #block: name of block of interest
-getMRData=function(verbose,folder,block="main"){
+getMRData=function(software,verbose,folder,block="main"){
   if (verbose>1) {
     print(paste("Reading mental rotation data for block",block,"from files"))
   }
-  MRData=getDataOpenSesame(verbose,folder,part=block)
+  if (software=="OSWeb"){
+    MRData=getDataOSWeb(verbose,folder,part=block)
+  }else if (software=="OpenSesame"){
+    MRData=getDataOpenSesame(verbose,folder,part=block)
+  }
   if (verbose>1) {
     print(paste("Mental rotation data from",length(unique(MRData$ID)),"participants was read. (",nrow(MRData),"trials in total)"))
   }
@@ -69,14 +81,9 @@ modifyMRData=function(verbose,MRData) {
     print("Transforming mental rotation data ...")
   }
   #convert array to numbers
-  MRData$anglesArray=stringToNumArray(MRData$anglesArray)
   MRData$answers=stringToNumArray(MRData$answers)
   #drop trials in which more than nStimuli/2 answers are selected (possible at end of blocks)
   MRData=MRData[lapply(MRData$answers, function(x) sum(unlist(x)))<=MRData$nStimuli/2,]
-  #trim angle arrays to number of stimuli (could this be vectorized?)
-  for(i in 1:nrow(MRData)){
-    MRData$anglesArray[i]=list(unlist(MRData$anglesArray[i])[1:MRData$nStimuli[i]])
-  }
   #split arrays into rows
   #commented are unnecessary rows
   MRData=data.frame(angleStimulus=rep(MRData$angle,MRData$nStimuli),
@@ -86,11 +93,11 @@ modifyMRData=function(verbose,MRData) {
                      reactionTime=rep(MRData$reactionTime,MRData$nStimuli),
                      #startTimeOfTask=rep(MRData$startTimeOfTask,MRData$nStimuli),
                      #sumCorrect=rep(MRData$sumCorrect,MRData$nStimuli),
-                     numberInBlock=rep(MRData$numberInBlock,MRData$nStimuli),
+                     itemNumber=rep(MRData$itemNumber,MRData$nStimuli),
                      block=rep(MRData$block,MRData$nStimuli),
                      ID=rep(MRData$ID,MRData$nStimuli),
                      #arrays to unlist
-                     angleAlternative=unlist(MRData$anglesArray),
+                     angleAlternative=unlist(stringToNumArray(MRData$anglesArray)),
                      #answer=unlist(stringToNumArray(MRData$answers)),
                      answerCorrect=unlist(stringToNumArray(MRData$correctAnswers)),
                      stimulusCorrect=unlist(stringToNumArray(MRData$correctStimuli)))
@@ -113,6 +120,7 @@ modifyMRData=function(verbose,MRData) {
   MRData$angleStimulus=NULL
   #drop mirrored stimuli
   MRData=MRData[MRData$stimulusCorrect==1,]
+  MRData$stimulusCorrect=NULL
   return(MRData)
 }
 
@@ -141,6 +149,42 @@ getDataOpenSesame=function(verbose, folder, preText="", part="main",ending="csv"
     dataset$numberInBlock=ave(dataset[,1],                 # Create numbering variable
                               dataset$aaBlock,
                               FUN = seq_along)
+    if (verbose>3) {
+      print(paste("read", nrow(dataset), "values from file:",fileName,"\n"))
+    }
+    #add to dataset
+    dat=rbind(dat,dataset)
+  }
+  #change names
+  dat$block=dat$aaBlock
+  dat$ID=dat$aaID
+  dat$aaBlock=NULL
+  dat$aaID=NULL
+  return(dat)
+}
+
+#reads data from OSWeb/JATOS files
+#verbose: detail of output
+#folder: folder to search in for files
+#preText: Filter, only get files which start with preText
+#part: Filter, only get parts of data in blocks whose name matches part
+#ending: filetype of files
+getDataOSWeb=function(verbose, folder, preText="", part="main",ending="csv") {
+  #get files in folger (Reaction Time Data)
+  fileNames=getFileNames(folder,preText,ending)
+  if (verbose>2) {
+    print("list of files:\n")
+    print(fileNames)
+  }
+  #initialize empty dataframe
+  dat=data.frame()
+  #loop through all files
+  for (fileIndex in 1:length(fileNames)) {
+    fileName=fileNames[fileIndex]
+    #read data in file as table
+    rawData=read.csv(paste(folder,fileName,sep=""),header=TRUE,fill=TRUE, sep=",")
+    #choose only specified block
+    dataset=rawData[rawData$aaBlock %in% part,]
     if (verbose>3) {
       print(paste("read", nrow(dataset), "values from file:",fileName,"\n"))
     }
