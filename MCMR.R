@@ -27,7 +27,7 @@ dir.create("figs/MR")
 options(digits=6)
 software=("OSWeb") #OSWeb or OpenSesame (classic)
 #set data folder
-folder="data\\testJatos\\"
+folder="data\\"
 verbose=3 #detail of output
 questionnaireOutFile="output\\questionnaire" #.csv added at end, leave empty if no output desired
 outlierFactor=3 #factor of sd to define outliers in MR

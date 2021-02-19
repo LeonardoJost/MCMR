@@ -121,6 +121,16 @@ modifyMRData=function(verbose,MRData) {
   #drop mirrored stimuli
   MRData=MRData[MRData$stimulusCorrect==1,]
   MRData$stimulusCorrect=NULL
+  #add missing trials
+  MRData$weight=1
+  #find blocks for each ID for which less than 24 answers are recorded (timeout)
+  #add missing answer with weight according to number of answers missing
+  library(plyr)
+  missingAnswers=ddply(MRData,.(ID,block,nStimuli,typeOfAlternatives),function(x) c(weight=24-nrow(x)))
+  missingAnswers=missingAnswers[which(missingAnswers$weight>0),]
+  missingAnswers$type="miss"
+  #combine datasets
+  MRData=rbind.fill(MRData,missingAnswers)
   return(MRData)
 }
 

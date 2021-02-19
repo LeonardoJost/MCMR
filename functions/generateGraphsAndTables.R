@@ -92,7 +92,7 @@ generateGraphs=function(dataset,title,legendProp=list(),ylab="Reaction time(ms)"
   ggsave(paste("figs/",title,"LinePlotByCondDegree.png",sep=""))
 }
 
-#generate lins graphs by time
+#generate line graphs by time
 generateLineGraphsByTime=function(dataset,title,legendProp=list(),ylab="Reaction time(ms)") {
   if(is.null(legendProp$pos))
     legendProp$pos=c(0.8,0.8)
@@ -152,6 +152,12 @@ calculateMeansQuestionnaire=function(verbose,questionnaireData,questionnaireOutF
     if(verbose>1){
       print(paste("Writing mean and mode data for questionnaires (by gender) to file",paste(questionnaireOutFile,"MeansByGender.csv", sep="")))
       print(paste("Writing mean and mode data for questionnaires to file",paste(questionnaireOutFile,"Means.csv", sep="")))
+    }
+    if(verbose>2){
+      print("Means by gender:")
+      print(questionnaireDataMeansByGender)
+      print("Overall means:")
+      print(subset(questionnaireDataMeans,select=-c(ID)))
     }
     write.table(questionnaireDataMeansByGender,file=paste(questionnaireOutFile,"MeansByGender.csv", sep=""),sep=";", col.names=NA)
     write.table(questionnaireDataMeans,file=paste(questionnaireOutFile,"Means.csv", sep=""),sep=";", col.names=NA)
