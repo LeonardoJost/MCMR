@@ -17,6 +17,7 @@
 source("functions/helpers.R")
 source("functions/readData.R", encoding="utf-8")
 source("functions/generateGraphsAndTables.R", encoding="utf-8")
+source("functions/detectOutliers.R")
 
 ##create output directories, if they don't exist (outputs warnings otherwise)
 dir.create("figs")
@@ -46,9 +47,14 @@ MRData=modifyMRData(verbose,MRData)
 calculateMeansQuestionnaire(verbose,questionnaireData,questionnaireOutFile,"")
 #remove not analyzed questionnaire data to protect participant identity
 questionnaireData=subset(questionnaireData,select=questionnaireDataCols)
-
+questionnaireData$STEM=ifelse(grepl("MINT",questionnaireData$STEM),"STEM",
+                              ifelse(grepl("anderes",questionnaireData$STEM),"nonSTEM","none"))
 #unify data
 dataset=merge(MRData,questionnaireData,by="ID")
+#mark outliers
+dataset=markOutliers(dataset)
+#remove unnecessary column
+dataset$firstAnswerSelected=NULL
 #anonymise IDs to protect participant identity
 dataset$ID=as.factor(dataset$ID)
 levels(dataset$ID)=paste("id",sample.int(length(levels(dataset$ID))),sep="")

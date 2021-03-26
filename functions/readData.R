@@ -82,25 +82,27 @@ modifyMRData=function(verbose,MRData) {
   }
   #convert array to numbers
   MRData$answers=stringToNumArray(MRData$answers)
+  #save first answer for possible answer patterns
+  MRData$firstAnswerSelected=unlist(lapply(MRData$answers, function(x) x[[1]]))
   #drop trials in which more than nStimuli/2 answers are selected (possible at end of blocks)
   MRData=MRData[lapply(MRData$answers, function(x) sum(unlist(x)))<=MRData$nStimuli/2,]
   #split arrays into rows
   #commented are unnecessary rows
   MRData=data.frame(angleStimulus=rep(MRData$angle,MRData$nStimuli),
-                     model=rep(MRData$model,MRData$nStimuli),
-                     nStimuli=rep(MRData$nStimuli,MRData$nStimuli),
-                     #orientation=rep(MRData$orientation,MRData$nStimuli),
-                     reactionTime=rep(MRData$reactionTime,MRData$nStimuli),
-                     #startTimeOfTask=rep(MRData$startTimeOfTask,MRData$nStimuli),
-                     #sumCorrect=rep(MRData$sumCorrect,MRData$nStimuli),
-                     itemNumber=rep(MRData$itemNumber,MRData$nStimuli),
-                     block=rep(MRData$block,MRData$nStimuli),
-                     ID=rep(MRData$ID,MRData$nStimuli),
-                     #arrays to unlist
-                     angleAlternative=unlist(stringToNumArray(MRData$anglesArray)),
-                     #answer=unlist(stringToNumArray(MRData$answers)),
-                     answerCorrect=unlist(stringToNumArray(MRData$correctAnswers)),
-                     stimulusCorrect=unlist(stringToNumArray(MRData$correctStimuli)))
+                    model=rep(MRData$model,MRData$nStimuli),
+                    nStimuli=rep(MRData$nStimuli,MRData$nStimuli),
+                    #orientation=rep(MRData$orientation,MRData$nStimuli),
+                    reactionTime=rep(MRData$reactionTime,MRData$nStimuli),
+                    #startTimeOfTask=rep(MRData$startTimeOfTask,MRData$nStimuli),
+                    #sumCorrect=rep(MRData$sumCorrect,MRData$nStimuli),
+                    itemNumber=rep(MRData$itemNumber,MRData$nStimuli),
+                    block=rep(MRData$block,MRData$nStimuli),
+                    ID=rep(MRData$ID,MRData$nStimuli),
+                    firstAnswerSelected=rep(MRData$firstAnswerSelected,MRData$nStimuli),
+                    #arrays to unlist
+                    angleAlternative=unlist(stringToNumArray(MRData$anglesArray)),
+                    answerCorrect=unlist(stringToNumArray(MRData$correctAnswers)),
+                    stimulusCorrect=unlist(stringToNumArray(MRData$correctStimuli)))
   #convert to numeric
   MRData$angleStimulus=toNumeric(MRData$angleStimulus)
   MRData$angleAlternative=toNumeric(MRData$angleAlternative)
@@ -144,7 +146,7 @@ getDataOpenSesame=function(verbose, folder, preText="", part="main",ending="csv"
   #get files in folger (Reaction Time Data)
   fileNames=getFileNames(folder,preText,ending)
   if (verbose>2) {
-    print("list of files:\n")
+    print("list of files:")
     print(fileNames)
   }
   #initialize empty dataframe
@@ -183,7 +185,7 @@ getDataOSWeb=function(verbose, folder, preText="", part="main",ending="csv") {
   #get files in folger (Reaction Time Data)
   fileNames=getFileNames(folder,preText,ending)
   if (verbose>2) {
-    print("list of files:\n")
+    print("list of files:")
     print(fileNames)
   }
   #initialize empty dataframe
