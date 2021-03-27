@@ -23,7 +23,7 @@ datasetAnalysis=read.csv(file="dataset\\dataset.csv",sep=";")
 #remove outliers
 datasetAnalysis=datasetAnalysis[which(!datasetAnalysis$outlier & !is.na(datasetAnalysis$Gender)),]
 #scaling
-datasetAnalysis$nStimuli=datasetAnalysis$nStimuli/10
+datasetAnalysis$nStimuliScaled=datasetAnalysis$nStimuli/10
 #prepare dataset
 dataset.acc=datasetAnalysis
 dataset.rt=datasetAnalysis
@@ -32,6 +32,13 @@ dataset.rt$type=NULL
 dataset.rt=unique(dataset.rt)
 
 ##Plots
+library(plyr)
+datasetByIDandTrial=ddply(datasetAnalysis,
+                          .(ID,block,Experience,Gender,nStimuli,typeOfAlternatives,itemNumber),
+                          summarize,
+                          hits=sum((type=="hit")),
+                          incorrects=sum((type=="incorrect")),
+                          allCorrect=ifelse(incorrects==0 & hits>0,1,0))
 datasetByIDandBlock=ddply(datasetAnalysis,
                           .(ID,block,Experience,Gender,nStimuli,typeOfAlternatives),
                           summarize,
@@ -45,9 +52,18 @@ library(ggplot2)
 ggplot(datasetByIDandBlock,aes(y=acc,x=nStimuli, fill=Gender, shape=typeOfAlternatives,color=Gender)) + 
   stat_summary(na.rm=TRUE, fun=mean, geom="line",aes(linetype=Gender)) +
   stat_summary(na.rm=TRUE, fun=mean, geom="point", size=2) +
-  stat_summary(fun.data=mean_cl_normal,geom="errorbar",position = "dodge",width=1) +
+  stat_summary(fun.data=mean_se,geom="errorbar",position = "dodge") +
   scale_x_continuous(breaks=c(2,4,8))+
   labs(x="number of alternatives",y="Proportion of correct answers",color="Gender",linetype="Gender",shape="type of alternatives") + 
   guides(fill=FALSE) + 
   theme_classic() + theme(legend.position = "right")
 ggsave("figs/MR/LinePlot.png")
+ggplot(datasetByIDandTrial,aes(y=allCorrect,x=nStimuli, fill=Gender, shape=typeOfAlternatives,color=Gender)) + 
+  stat_summary(na.rm=TRUE, fun=mean, geom="line",aes(linetype=Gender)) +
+  stat_summary(na.rm=TRUE, fun=mean, geom="point", size=2) +
+  stat_summary(fun.data=mean_se,geom="errorbar",position = "dodge") +
+  scale_x_continuous(breaks=c(2,4,8))+
+  labs(x="number of alternatives",y="Proportion of correct answers",color="Gender",linetype="Gender",shape="type of alternatives") + 
+  guides(fill=FALSE) + 
+  theme_classic() + theme(legend.position = "right")
+
