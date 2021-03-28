@@ -49,18 +49,25 @@ calculateMeansQuestionnaire(verbose,questionnaireData,questionnaireOutFile,"")
 questionnaireData=subset(questionnaireData,select=questionnaireDataCols)
 questionnaireData$STEM=ifelse(grepl("MINT",questionnaireData$STEM),"STEM",
                               ifelse(grepl("anderes",questionnaireData$STEM),"nonSTEM","none"))
+#rename gender to sex
+questionnaireData$sex=questionnaireData$Gender
+questionnaireData$Gender=NULL
 #unify data
 dataset=merge(MRData,questionnaireData,by="ID")
 #mark outliers
-dataset=markOutliers(dataset)
+dataset=markOutliers(dataset,verbose)
 #remove unnecessary column
 dataset$firstAnswerSelected=NULL
 #anonymise IDs to protect participant identity
 dataset$ID=as.factor(dataset$ID)
 levels(dataset$ID)=paste("id",sample.int(length(levels(dataset$ID))),sep="")
 
+#add contrasted variables
+dataset$sexNumeric=sapply(as.factor(dataset$sex),function(i) contr.sum(2)[i,])
+dataset$typeNumeric=sapply(as.factor(dataset$typeOfAlternatives),function(i) contr.sum(2)[i,])
+nStimuliNumeric=sapply(as.factor(dataset$nStimuli),function(i) contr.sum(3)[i,])
+dataset$nStimuliNumeric1=nStimuliNumeric[1,]
+dataset$nStimuliNumeric2=nStimuliNumeric[2,]
+
 #save full dataset to csv
 write.table(dataset,file="output\\dataset.csv",sep=";", row.names = F)
-
-##create datasets for analysis and plot reaction time and accuracy by interesting conditions
-source("functions/createDatasets.R", encoding="utf-8")

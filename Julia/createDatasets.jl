@@ -18,27 +18,34 @@
 using MixedModels
 using Random
 using DataFrames
+using DataFramesMeta
+using Gadfly
 using CSV
+
 #read data
-dataset=CSV.read("dataset\\dataset.csv")
+dataset=CSV.read("dataset\\dataset.csv", DataFrame)
+#inspect data
 show(first(dataset,6))
 show(names(dataset))
 show(dataset)
-#scaling
-dataset.deg=dataset.deg/100
-#accuracy dataset
-datasetAcc=dataset
-#drop rows for reaction time dataset
-datasetRt=select(dataset,Not([:deg, :type]))
-#make unique
-unique!(datasetRt)
-
+show(eltype.(eachcol(dataset)))
+#remove outliers
+dataset=dataset[.!dataset.outlier,:]
+#convert types to numeric
+for i in [:itemNumber, :sexNumeric, :typeNumeric, :nStimuliNumeric1, :nStimuliNumeric2, :degScaled]
+  show(i)
+  #dataset[!,:i]=convert(Float64,dataset[!,:i)
+end
+vec=DataFrame(x=dataset[1:6,:itemNumber])
+push!(vec,["avc"])
+vec.x=tryparse.(Int,vec.x)
 #analysis
 @elapsed mBase=fit(LinearMixedModel,@formula(reactionTime~deg+
            (deg|ID)+(1|modelNumber)), dataset,REML=false)
-
-mBaseBstp = parametricbootstrap(MersenneTwister(42), 1000, mBase)
+issingular(mBase)
+mBaseBstp = parametricbootstrap(1000, mBase)
 df=DataFrame(mBaseBstp.allpars)
+σres = @where(df, :type .== "σ", :group .== "residual").value
+plot(x = σres, Geom.density, Guide.xlabel("Parametric bootstrap estimates of σ"))
 df2=groupby(df, [:type, :group, :names])
 combine(df2, :value => (x -> shortestcovint(x,0.95)) => :interval)
-shortestcovint(df.value,0.9)

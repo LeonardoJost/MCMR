@@ -14,33 +14,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-### functions
-source("functions/helpers.R")
-source("functions/generateGraphsAndTables.R", encoding="utf-8")
-
 #load full dataset
 datasetAnalysis=read.csv(file="dataset\\dataset.csv",sep=";")
 #remove outliers
-datasetAnalysis=datasetAnalysis[which(!datasetAnalysis$outlier & !is.na(datasetAnalysis$Gender)),]
-#scaling
-datasetAnalysis$nStimuliScaled=datasetAnalysis$nStimuli/10
-#prepare dataset
-dataset.acc=datasetAnalysis
-dataset.rt=datasetAnalysis
-dataset.rt$deg=NULL
-dataset.rt$type=NULL
-dataset.rt=unique(dataset.rt)
+datasetAnalysis=datasetAnalysis[which(!datasetAnalysis$outlier),]
 
 ##Plots
 library(plyr)
 datasetByIDandTrial=ddply(datasetAnalysis,
-                          .(ID,block,Experience,Gender,nStimuli,typeOfAlternatives,itemNumber),
+                          .(ID,block,Experience,STEM,Gender,nStimuli,typeOfAlternatives,itemNumber),
                           summarize,
                           hits=sum((type=="hit")),
                           incorrects=sum((type=="incorrect")),
                           allCorrect=ifelse(incorrects==0 & hits>0,1,0))
 datasetByIDandBlock=ddply(datasetAnalysis,
-                          .(ID,block,Experience,Gender,nStimuli,typeOfAlternatives),
+                          .(ID,block,Experience,STEM,Gender,nStimuli,typeOfAlternatives),
                           summarize,
                           time=sum(reactionTime*2/nStimuli,na.rm=T)/180000,
                           hits=sum((type=="hit")),
