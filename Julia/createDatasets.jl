@@ -27,18 +27,54 @@ dataset=CSV.read("dataset\\dataset.csv", DataFrame)
 #inspect data
 show(first(dataset,6))
 show(names(dataset))
-show(dataset)
+show(IOContext(stdout, :limit=>false),dataset[115:1000,[:type, :deg]])
 show(eltype.(eachcol(dataset)))
 #remove outliers
 dataset=dataset[.!dataset.outlier,:]
+dataset=dataset[dataset[!,:sex].!="NA",:]
 #convert types to numeric
-for i in [:itemNumber, :sexNumeric, :typeNumeric, :nStimuliNumeric1, :nStimuliNumeric2, :degScaled]
-  show(i)
-  #dataset[!,:i]=convert(Float64,dataset[!,:i)
+for i in [:sexNumeric]
+  dataset[!,i]=tryparse.(Int,dataset[!,i])
 end
-vec=DataFrame(x=dataset[1:6,:itemNumber])
-push!(vec,["avc"])
-vec.x=tryparse.(Int,vec.x)
+#add block as numeric variable
+dataset.blockNumeric=tryparse.(Int,chop.(dataset.block,head=4,tail=0))
+
+vec=dataset[1:20,:block]
+push!(vec,"add")
+vec=tryparse.(Int,chop.(vec,head=4,tail=0))
+vec=replace(vec,nothing=>missing)
+
+dataset.responseCorrect=dataset.type.=="hit"
+
+##random slopes
+#start with maximal model
+#(do not use interactions to avoid overparametrization, check later for interactions of interest)
+modelFormula=@formula(responseCorrect~sexNumeric*nStimuliNumeric1*typeNumeric+sexNumeric*nStimuliNumeric2*typeNumeric+
+              block+STEM+Experience+deg+itemNumber+
+              (nStimuliNumeric1+nStimuliNumeric2+typeNumeric+block+deg+itemNumber|ID)+
+              (sexNumeric+nStimuliNumeric1+nStimuliNumeric2+typeNumeric+block+STEM+Experience+deg+itemNumber|modelNumber))
+@elapsed gm1=fit(MixedModel,modelFormula,dataset,Binomial())
+#remove random correlation
+modelFormula=@formula(responseCorrect~sexNumeric*nStimuliNumeric1*typeNumeric+sexNumeric*nStimuliNumeric2*typeNumeric+
+              block+STEM+Experience+deg+itemNumber+
+              zerocorr(nStimuliNumeric1+nStimuliNumeric2+typeNumeric+block+deg+itemNumber|ID)+
+              zerocorr(sexNumeric+nStimuliNumeric1+nStimuliNumeric2+typeNumeric+block+STEM+Experience+deg+itemNumber|modelNumber))
+@elapsed gm2=fit(MixedModel,modelFormula,dataset,Binomial())
+@elapsed gm2a=fit(MixedModel,modelFormula,dataset,Bernoulli())
+show(VarCorr(gm2))
+show(MixedModels.likelihoodratiotest(gm1,gm2))
+#gm2 is better than gm1
+#remove deg|ID
+modelFormula=@formula(responseCorrect~sexNumeric*nStimuliNumeric1*typeNumeric+sexNumeric*nStimuliNumeric2*typeNumeric+
+              block+STEM+Experience+deg+itemNumber+
+              zerocorr(nStimuliNumeric1+nStimuliNumeric2+typeNumeric+block+itemNumber|ID)+
+              zerocorr(sexNumeric+nStimuliNumeric1+nStimuliNumeric2+typeNumeric+block+STEM+Experience+deg+itemNumber|modelNumber))
+@elapsed gm3=fit(MixedModel,modelFormula,dataset,Binomial())
+
+lrtval = objective(m0) - objective(m1)
+ccdf(Chisq(1), lrtval)
+
+
 #analysis
 @elapsed mBase=fit(LinearMixedModel,@formula(reactionTime~deg+
            (deg|ID)+(1|modelNumber)), dataset,REML=false)

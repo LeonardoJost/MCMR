@@ -124,17 +124,25 @@ modifyMRData=function(verbose,MRData) {
   MRData=MRData[MRData$stimulusCorrect==1,]
   MRData$stimulusCorrect=NULL
   #add missing trials
-  MRData$weight=1
   #find blocks for each ID for which less than 24 answers are recorded (timeout)
-  #add missing answer with weight according to number of answers missing
   library(plyr)
-  missingAnswers=ddply(MRData,.(ID,block,nStimuli,typeOfAlternatives),function(x) c(weight=24-nrow(x)))
-  missingAnswers=missingAnswers[which(missingAnswers$weight>0),]
+  missingAnswers=ddply(MRData,.(ID,block,nStimuli,typeOfAlternatives),
+                       imputeMissingAnswers)
   missingAnswers$type="miss"
   #combine datasets
   MRData=rbind.fill(MRData,missingAnswers)
   return(MRData)
 }
+
+#impute missing answers by mean of deg and itemNumber and random choice of modelNumber from previous data of block
+imputeMissingAnswers=function(df){
+  rows=24-nrow(df)
+  deg=rep(mean(df$deg),rows)
+  itemNumber=rep(mean(df$itemNumber),rows)
+  modelNumber=sample(df$modelNumber,rows,replace=T)
+  return(data.frame(deg,itemNumber,modelNumber))
+}
+
 
 #reads data from files
 #verbose: detail of output
