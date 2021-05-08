@@ -21,25 +21,34 @@ datasetAnalysis=datasetAnalysis[which(!datasetAnalysis$outlier & !is.na(datasetA
 
 #scaling
 datasetAnalysis$degScaled=datasetAnalysis$deg/100
+datasetAnalysis$itemNumberScaled=datasetAnalysis$itemNumber/10
+datasetAnalysis$nStimuliFactor=as.factor(datasetAnalysis$nStimuli)
 
+datasetAnalysis2=datasetAnalysis[which(datasetAnalysis$block=="main1"),]
 #create summarized datasets
 library(plyr)
 #create dataset summarized by trials (over multiple items of trials)
 datasetByIDandTrial=ddply(datasetAnalysis,
-                          .(ID,block,Experience,STEM,sex,nStimuli,typeOfAlternatives,itemNumber),
+                          .(ID,block,Experience,STEM,sex,nStimuli,typeOfAlternatives,itemNumber,
+                            sexContrasts,typeContrasts,nStimuliContrasts1,nStimuliContrasts2,ExperienceContrasts,STEMContrasts1,STEMContrasts2),
                           summarize,
                           hits=sum((type=="hit")),
                           incorrects=sum((type=="incorrect")),
                           allCorrect=ifelse(incorrects==0 & hits>0,1,0))
 #create dataset summarized by blocks
-datasetByIDandBlock=ddply(datasetAnalysis,
-                          .(ID,block,Experience,STEM,sex,nStimuli,typeOfAlternatives),
+datasetByIDandBlock=ddply(datasetByIDandTrial,
+                          .(ID,block,Experience,STEM,sex,nStimuli,typeOfAlternatives,
+                            sexContrasts,typeContrasts,nStimuliContrasts1,nStimuliContrasts2,ExperienceContrasts,STEMContrasts1,STEMContrasts2),
                           summarize,
-                          time=sum(reactionTime*2/nStimuli,na.rm=T)/180000,
-                          hits=sum((type=="hit")),
-                          incorrects=sum((type=="incorrect")),
-                          accAttempts=hits/(hits+incorrects),
-                          acc=sum((type=="hit")/24))
+                          hitSum=sum(hits),
+                          incorrectSum=sum(incorrects),
+                          accAttempts=hitSum/(hitSum+incorrectSum),
+                          acc=hitSum/24,
+                          allCorrectSum=sum(allCorrect),
+                          accScoring=sum(allCorrect/48*nStimuli))
+#save full dataset to csv
+write.table(datasetByIDandBlock,file="output\\datasetByBlock.csv",sep=";", row.names = F)
+datasetByIDandBlock$accScoringCorrected=datasetByIDandBlock$accScoring^(2/datasetByIDandBlock$nStimuli)
 library(ggplot2)
 #plot data as line graph (mean Data by degree and condition)
 ggplot(datasetByIDandBlock,aes(y=acc,x=nStimuli, fill=sex, shape=typeOfAlternatives,color=sex)) + 
@@ -51,7 +60,7 @@ ggplot(datasetByIDandBlock,aes(y=acc,x=nStimuli, fill=sex, shape=typeOfAlternati
   guides(fill=FALSE) + 
   theme_classic() + theme(legend.position = "right")
 ggsave("figs/MR/LinePlot.png")
-ggplot(datasetByIDandTrial,aes(y=allCorrect,x=nStimuli, fill=sex, shape=typeOfAlternatives,color=sex)) + 
+ggplot(datasetByIDandBlock,aes(y=accScoringCorrected,x=nStimuli, fill=sex, shape=typeOfAlternatives,color=sex)) + 
   stat_summary(na.rm=TRUE, fun=mean, geom="line",aes(linetype=sex)) +
   stat_summary(na.rm=TRUE, fun=mean, geom="point", size=2) +
   stat_summary(fun.data=mean_se,geom="errorbar",position = "dodge") +
@@ -59,4 +68,6 @@ ggplot(datasetByIDandTrial,aes(y=allCorrect,x=nStimuli, fill=sex, shape=typeOfAl
   labs(x="number of alternatives",y="Proportion of correct answers",color="sex",linetype="sex",shape="type of alternatives") + 
   guides(fill=FALSE) + 
   theme_classic() + theme(legend.position = "right")
+ggsave("figs/MR/LinePlotFullCorrectScoringCorrected.png")
+
 

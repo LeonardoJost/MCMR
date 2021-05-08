@@ -62,12 +62,16 @@ dataset$firstAnswerSelected=NULL
 dataset$ID=as.factor(dataset$ID)
 levels(dataset$ID)=paste("id",sample.int(length(levels(dataset$ID))),sep="")
 
-#add contrasted variables
-dataset$sexNumeric=sapply(as.factor(dataset$sex),function(i) contr.sum(2)[i,])
-dataset$typeNumeric=sapply(as.factor(dataset$typeOfAlternatives),function(i) contr.sum(2)[i,])
-nStimuliNumeric=sapply(as.factor(dataset$nStimuli),function(i) contr.sum(3)[i,])
-dataset$nStimuliNumeric1=nStimuliNumeric[1,]
-dataset$nStimuliNumeric2=nStimuliNumeric[2,]
+#add sum contrasted variables
+dataset$sexContrasts=sapply(as.factor(dataset$sex),function(i) contr.sum(2)[i,])
+dataset$typeContrasts=sapply(as.factor(dataset$typeOfAlternatives),function(i) contr.sum(2)[i,])
+nStimuliContrasts=sapply(as.factor(dataset$nStimuli),function(i) contr.sum(3)[i,])
+dataset$nStimuliContrasts1=nStimuliContrasts[1,]
+dataset$nStimuliContrasts2=nStimuliContrasts[2,]
+dataset$ExperienceContrasts=sapply(as.factor(dataset$Experience),function(i) contr.sum(2)[i,])
+STEMContrasts=sapply(as.factor(dataset$STEM),function(i) contr.sum(3)[i,])
+dataset$STEMContrasts1=STEMContrasts[1,]
+dataset$STEMContrasts2=STEMContrasts[2,]
 
 #save full dataset to csv
 write.table(dataset,file="output\\dataset.csv",sep=";", row.names = F)
