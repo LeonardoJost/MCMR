@@ -73,5 +73,10 @@ STEMContrasts=sapply(as.factor(dataset$STEM),function(i) contr.sum(3)[i,])
 dataset$STEMContrasts1=STEMContrasts[1,]
 dataset$STEMContrasts2=STEMContrasts[2,]
 
+#rename entries to english
+dataset$sex=ifelse(dataset$sex=="m","male","female")
+dataset$Experience=ifelse(dataset$Experience=="Ja","yes","no")
+
+
 #save full dataset to csv
 write.table(dataset,file="output\\dataset.csv",sep=";", row.names = F)

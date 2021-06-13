@@ -131,6 +131,20 @@ modifyMRData=function(verbose,MRData) {
   missingAnswers$type="miss"
   #combine datasets
   MRData=rbind.fill(MRData,missingAnswers)
+  #scale trial numbers to 0..1
+  trialNumbers=ddply(MRData,.(ID,block),summarize,
+                     minItem=min(itemNumber),
+                     maxItem=max(itemNumber))
+  MRData=merge(MRData,trialNumbers,by=c("ID","block"))
+  MRData$trialNumber=(MRData$itemNumber-MRData$minItem)/(MRData$maxItem-MRData$minItem)
+  MRData$minItem=NULL
+  MRData$maxItem=NULL
+  MRData$itemNumber=NULL
+  #add overall number of correct answers
+  overallHits=ddply(MRData,
+                    .(ID), summarize,
+                    overallHits=sum((type=="hit")))
+  MRData=merge(MRData,overallHits,by="ID")
   return(MRData)
 }
 
