@@ -23,7 +23,7 @@ datasetAnalysis=datasetAnalysis[which(!datasetAnalysis$outlier & !is.na(datasetA
 library(plyr)
 #create dataset summarized by trials (over multiple items of trials)
 datasetByIDandTrial=ddply(datasetAnalysis,
-                          .(ID,block,Experience,STEM,sex,nStimuli,typeOfAlternatives,itemNumber),
+                          .(ID,block,Experience,STEM,sex,nStimuli,typeOfAlternatives,trialNumber),
                           summarize,
                           hits=sum((type=="hit")))
 #create dataset summarized by blocks
@@ -58,7 +58,7 @@ ggplot(datasetByIDandBlock,aes(y=acc,x=nStimuli, fill=sex, shape=typeOfAlternati
   facet_grid(Experience ~ STEM)+
   labs(x="number of alternatives",y="Proportion of correct trials",color="sex",linetype="sex",shape="type of alternatives") + 
   guides(fill=FALSE) + 
-  geom_text(data=plyr::count(datasetByIDandBlock, vars = c("Experience","STEM")), aes(x=8, y=0.5, label=paste0("n = ",freq/6)), colour="black", inherit.aes=FALSE, parse=FALSE)+
+  geom_text(data=plyr::count(datasetByIDandBlock, vars = c("Experience","STEM")), aes(x=6, y=0.5, label=paste0("n = ",freq/6)), colour="black", inherit.aes=FALSE, parse=FALSE)+
   theme_bw() + theme(legend.position = "right")
 ggsave("figs/MR/LinePlotInteraction.png")
 
