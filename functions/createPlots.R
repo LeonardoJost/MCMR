@@ -43,7 +43,7 @@ ggplot(datasetByIDandBlock,aes(y=acc,x=nStimuli, fill=sex, shape=typeOfAlternati
   scale_x_continuous(breaks=c(2,4,8))+
   labs(x="number of alternatives",y="Proportion of correct trials",color="sex",linetype="sex",shape="type of alternatives") + 
   guides(fill=FALSE) + 
-  theme_bw() + theme(legend.position = "right")
+  theme_classic() + theme(legend.position = "right")
 ggsave("figs/MR/LinePlot.png")
 #plot data as line graph separated by experience and stem
 ns=ddply(datasetByIDandBlock,

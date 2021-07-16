@@ -98,6 +98,40 @@ image_write(img, path = paste(baseFolder,"DesignComparison",".", fileFormat,sep=
 dev.off()
 gc()
 
+### compare sm and vk test
+#positions:
+pos=matrix(c(
+  #sm test
+  c(-0.5,0,3),
+  c(1.5,0,3),
+  #vk test
+  c(-2,0,2),
+  c(0,0,2),
+  c(1,0,2),
+  c(2,0,2),
+  c(3,0,2)),
+  nrow=3)
+#multiply
+pos=pos*7
+#shift
+pos=pos+c(0,0,0)
+pos=t(pos)
+angles=t(matrix(c(c(0,0,0),c(0,45,0),
+                  c(0,0,0),c(0,45,0),c(0,-45,0),c(0,45,0),c(0,-45,0)),
+                nrow=3))
+orientations=c("a","a",
+               "a","a","a","b","b")
+img=showImages()
+#show figure
+#print(img)
+#trim and add border and separating lines
+img=image_draw(image_border(image_trim(img),"black","20x20"))
+abline(h=150,col="white")
+#save image
+image_write(img, path = paste(baseFolder,"SmVkComparison",".", fileFormat,sep=""), format = fileFormat)
+dev.off()
+gc()
+
 ###general design
 #positions:
 pos=matrix(c(
