@@ -203,7 +203,7 @@ ns=c(14:26)*5
 significantDataFrame=randSim(ns)
 #plot by n
 ggplot(significantDataFrame,aes(x=n,y=propSignificant,color=effects)) +
-  geom_point() + geom_line() + labs(y="simulated power") +
+  geom_point() + geom_line() + labs(y="simulated power", x="N") +
   scale_x_continuous(breaks = ns) +
   theme_classic()
 ggsave(paste("figs/SimulPowerN.png",sep=""))
@@ -216,7 +216,7 @@ numberOfEachTrials=c(8,12,16,24,48)
 significantDataFrame=randSim(ns=c(100),F,numberOfEachTrials,1000,0.73,0)
 #plot by number of trials
 ggplot(significantDataFrame,aes(x=numberOfEachTrial,y=propSignificant,color=effects)) +
-  geom_point() + geom_line() + labs(y="simulated power", x="tasks per cell") +
+  geom_point() + geom_line() + labs(y="simulated power", x="trials per test") +
   scale_x_continuous(breaks = numberOfEachTrials) +
   theme_classic()
 ggsave(paste("figs/SimulPowerTrials.png",sep=""))
@@ -229,10 +229,10 @@ cohensDsDataFrame=cohensDsim(ns=c(100),numberOfEachTrials,1000,0.73,0)
 #rename
 cohensDsDataFrame$values=ifelse(cohensDsDataFrame$probType=="logOdds","base probability(log odds)","binomially distributed responses")
 #plot by number of trials
-ggplot(cohensDsDataFrame,aes(x=numberOfEachTrial,y=value,color=values)) +
-  geom_point() + geom_line() + labs(y="simulated cohens d") +
+ggplot(cohensDsDataFrame,aes(x=numberOfEachTrial,y=value,color=values,shape=values)) +
+  geom_point() + geom_line() + labs(y="simulated Cohen's d", x="number of responses",color="",shape="") +
   scale_x_continuous(breaks = numberOfEachTrials) +
-  theme_classic()
+  theme_classic() +theme(legend.position = c(0.8,0.2))
 ggsave(paste("figs/cohensD.png",sep=""))
 #save data
 write.table(cohensDsDataFrame,file="cohensD.csv",sep=";", row.names = FALSE)
