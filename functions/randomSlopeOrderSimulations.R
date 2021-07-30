@@ -120,7 +120,7 @@ randSim=function(ns,numberOfEachTrials=c(1),reps=1000,sd=0.73,sd2=0.34){
       #to get some sense of progress
       print(n)
       #every combination (3 nStimuli*2 types=6) twice
-      N=n*12
+      N=n*6
       significant = matrix(nrow=reps, ncol=9)
       #repeatedly simulate data and get results
       for(i in 1:reps){
@@ -167,4 +167,4 @@ ggsave(paste("figs/SimulPowerTrials.png",sep=""))
 #save data
 write.table(significantDataFrame,file="simulPowerOrder.csv",sep=";", row.names = FALSE)
 
-testdata=generateData(100,1200,24,0.73,0)
+testdata=generateData(100,600,24,0.73,0)
