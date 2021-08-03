@@ -14,6 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+##create output directories, if they don't exist (outputs warnings otherwise)
+dir.create("figs")
+dir.create("figs/MR")
+
 #load full dataset
 datasetAnalysis=read.csv(file="dataset\\dataset.csv",sep=";")
 #remove outliers
