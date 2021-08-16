@@ -18,7 +18,7 @@
 
 #generate dataset
 #n - number of participants
-#N - number of measurement categories in total (this is currently always n*12)
+#N - number of measurement categories in total (this is currently always n*6)
 #numberOfEachTrial - number of repetitions of each measurement for binomial distribution (note the hard coded outliers)
 #standard deviation consists of two parts
 #sqrt(0.66)*sd - standard deviation between participants
@@ -78,6 +78,8 @@ generateData=function(n,N,numberOfEachTrial,sd=0.73,sd2=0.34) {
   testdata$correctResponses=rbinom(N,size=testdata$weights,prob=testdata$prob)/testdata$weights
   #generate fully correct trials (4 items, 2 consecutively correct items as p^2 because there are no other assumptions)
   testdata$correctResponsesScoringSystem=rbinom(N,size=testdata$weights/2,prob=testdata$prob^2)/testdata$weights/2
+  #use p^3 as base probability due to scoring approximation
+  testdata$correctResponsesScoringSystem3=rbinom(N,size=testdata$weights/2,prob=testdata$prob^3)/testdata$weights/2
   return(testdata)
 }
 
@@ -165,22 +167,28 @@ getCohensDs=function(testdata,typ,nStim){
   sdM=sd(testdata$correctResponsesScoringSystem[which(testdata$nStimuli==nStim & testdata$sex=="m" & testdata$type==typ)],na.rm=T)
   sdF=sd(testdata$correctResponsesScoringSystem[which(testdata$nStimuli==nStim & testdata$sex=="f" & testdata$type==typ)],na.rm=T)
   valueResponsesScoringSystem=(meanM-meanF)/(sqrt((sdM^2+sdF^2)/2))
-return(c(valueLogOdds,valueResponses,valueResponsesScoringSystem))
+  #cohens d for scoring system (p^3)
+  meanM=mean(testdata$correctResponsesScoringSystem3[which(testdata$nStimuli==nStim & testdata$sex=="m" & testdata$type==typ)],na.rm=T)
+  meanF=mean(testdata$correctResponsesScoringSystem3[which(testdata$nStimuli==nStim & testdata$sex=="f" & testdata$type==typ)],na.rm=T)
+  sdM=sd(testdata$correctResponsesScoringSystem3[which(testdata$nStimuli==nStim & testdata$sex=="m" & testdata$type==typ)],na.rm=T)
+  sdF=sd(testdata$correctResponsesScoringSystem3[which(testdata$nStimuli==nStim & testdata$sex=="f" & testdata$type==typ)],na.rm=T)
+  valueResponsesScoringSystem3=(meanM-meanF)/(sqrt((sdM^2+sdF^2)/2))
+return(c(valueLogOdds,valueResponses,valueResponsesScoringSystem,valueResponsesScoringSystem3))
 }
 
 #calculate mean cohensD for multiple randomly generated data
 cohensDsim=function(ns,numberOfEachTrials=c(8,12,16),reps=100,sd=0.73,sd2=0.34){
   numTrials=length(numberOfEachTrials)
   #loop over number of participants
-  dsDataFrame=data.frame(numberOfEachTrial=rep(numberOfEachTrials,each=3*length(ns)),
-                                  n=rep(ns,each=3*numTrials),
-                                  probType=rep(c("logOdds","responses","scoringSystem"),length(ns)*numTrials),
-                                  value=rep(0,length(ns)*3*numTrials))
+  dsDataFrame=data.frame(numberOfEachTrial=rep(numberOfEachTrials,each=4*length(ns)),
+                                  n=rep(ns,each=4*numTrials),
+                                  probType=rep(c("logOdds","responses","scoringSystem","scoringSystem3"),length(ns)*numTrials),
+                                  value=rep(0,length(ns)*4*numTrials))
   for(numberOfEachTrial in numberOfEachTrials){
     for(n in ns) {
       #every combination (3 nStimuli*2 types=6)
       N=n*6
-      cohensDs = matrix(nrow=reps, ncol=3)
+      cohensDs = matrix(nrow=reps, ncol=4)
       for(i in 1:reps){
         testdata=generateData(n,N,numberOfEachTrial,sd,sd2)
         cohensDs[i,]=getCohensDs(testdata,"type1",4)
@@ -192,6 +200,8 @@ cohensDsim=function(ns,numberOfEachTrials=c(8,12,16),reps=100,sd=0.73,sd2=0.34){
         mean(cohensDs[,2])
       dsDataFrame$value[which(dsDataFrame$numberOfEachTrial==numberOfEachTrial & dsDataFrame$n==n & dsDataFrame$probType=="scoringSystem")]=
         mean(cohensDs[,3])
+      dsDataFrame$value[which(dsDataFrame$numberOfEachTrial==numberOfEachTrial & dsDataFrame$n==n & dsDataFrame$probType=="scoringSystem3")]=
+        mean(cohensDs[,4])
     }
   }
   return(dsDataFrame)
@@ -218,9 +228,9 @@ ggplot(significantDataFrame,aes(x=n,y=propSignificant,color=effects)) +
   geom_point() + geom_line() + labs(y="simulated power", x="N") +
   scale_x_continuous(breaks = ns) +
   theme_classic()
-ggsave(paste("figs/SimulPowerN.png",sep=""))
+ggsave(paste("figs/SimulPowerN2.png",sep=""))
 #save data
-write.table(significantDataFrame,file="simulPowerN.csv",sep=";", row.names = FALSE)
+write.table(significantDataFrame,file="simulPowerN2.csv",sep=";", row.names = FALSE)
 
 #get power for simulated binomial distributions
 set.seed(88735)
@@ -231,79 +241,27 @@ ggplot(significantDataFrame,aes(x=numberOfEachTrial,y=propSignificant,color=effe
   geom_point() + geom_line() + labs(y="simulated power", x="trials per test") +
   scale_x_continuous(breaks = numberOfEachTrials) +
   theme_classic()
-ggsave(paste("figs/SimulPowerTrials.png",sep=""))
+ggsave(paste("figs/SimulPowerTrials2.png",sep=""))
 #save data
-write.table(significantDataFrame,file="simulPowerTrials.csv",sep=";", row.names = FALSE)
+write.table(significantDataFrame,file="simulPowerTrials2.csv",sep=";", row.names = FALSE)
 #calculate cohens d for different numbers of trials
 set.seed(99261)
 numberOfEachTrials=c(8,12,16,24,32,48)
 cohensDsDataFrame=cohensDsim(ns=c(100),numberOfEachTrials,1000,0.73,0)
 #rename
-cohensDsDataFrame$values=ifelse(cohensDsDataFrame$probType=="logOdds","base probability(log odds)","binomially distributed responses")
+cohensDsDataFrame$values=ifelse(cohensDsDataFrame$probType=="logOdds","base probability(log odds)",
+                                ifelse(cohensDsDataFrame$probType=="responses","binomially distributed responses",
+                                ifelse(cohensDsDataFrame$probType=="scoringSystem","scoring system (p^2)","scoring system (p^3)")))
 #plot by number of trials
 ggplot(cohensDsDataFrame,aes(x=numberOfEachTrial,y=value,color=values,shape=values)) +
   geom_point() + geom_line() + labs(y="simulated Cohen's d", x="number of responses",color="",shape="") +
   scale_x_continuous(breaks = numberOfEachTrials) +
-  theme_classic() +theme(legend.position = c(0.8,0.2))
-ggsave(paste("figs/cohensD.png",sep=""))
+  theme_classic() +theme(legend.position = c(0.7,0.25),legend.background = element_rect(fill="transparent"))
+ggsave(paste("figs/cohensD2.png",sep=""))
+
 #save data
-write.table(cohensDsDataFrame,file="cohensD.csv",sep=";", row.names = FALSE)
+write.table(cohensDsDataFrame,file="cohensD2.csv",sep=";", row.names = FALSE)
 
-
-###test
-paov=rep(0,100)
-plmer=rep(0,100)
-meancor=rep(0,100)
-meancrosscor=rep(0,100)
-for(i in c(1:100)){
-  testdata=generateData(100,600,24,0.73)
-  testdata$nStimFactor=as.factor(testdata$nStimuli)
-  #paov[i]=summary(aov(logOdds~sex*type*nStimFactor+Error(ids/(type*nStimFactor)),data=testdata))[[4]][[1]][2,5]
-  #plmer[i]=drop1((lmer(logOdds~sex*type*nStimFactor+(1|ids),data=testdata)),test="Chisq")$"Pr(Chi)"[2]
-  sumcor=0
-  crosscor=0
-  for(j in c(1:5)){
-    for(k in c((j+1):6)){
-      #print(cor(testdata$logOdds[c(0:99)*6+j],testdata$logOdds[c(0:99)*6+k]))
-      sumcor=sumcor+cor(testdata$logOdds[c(0:49)*6+j],testdata$logOdds[c(0:49)*6+k])
-      sumcor=sumcor+cor(testdata$logOdds[c(50:99)*6+j],testdata$logOdds[c(50:99)*6+k])
-      crosscor=crosscor+cor(testdata$logOdds[c(0:49)*6+j],testdata$logOdds[c(50:99)*6+k])
-      crosscor=crosscor+cor(testdata$logOdds[c(50:99)*6+j],testdata$logOdds[c(0:49)*6+k])
-    }
-  }
-  meancor[i]=sumcor/30
-  meancrosscor[i]=crosscor/30
-  #print(paste("mean correlation:",sumcor/15))
-}
-sum(paov<.05)
-sum(plmer<.05)
-print(paste("mean correlation:",mean(meancor)))
-print(paste("mean cross correlation:",mean(meancrosscor)))
-
-plot(sort(paov),sort(plmer))
-plot(sort(plmer))
-
-testdata=generateData(100,600,24,0.73)
-
-#test sd
-for(mf in c("f","m")){
-  for(nstim in c(2,4,8)) {
-    for(ty in c("type1","type2")) {
-      print(paste(mf,nstim,ty))
-      print(sd(testdata$logOdds[which(testdata$sex==mf & testdata$nStimuli==nstim & testdata$type==ty)]))
-    }
-  }
-}
-print(sd(testdata$logOdds))
-#test means
-for(mf in c("f","m")){
-  for(nstim in c(2,4,8)) {
-    for(ty in c("type1","type2")) {
-      print(paste(mf,nstim,ty))
-      print(mean(testdata$logOdds[which(testdata$sex==mf & testdata$nStimuli==nstim & testdata$type==ty)]))
-    }
-  }
-}
 
 ##power analysis and effect sizes for anova
 library(Superpower)
