@@ -1,4 +1,4 @@
-### create and plot dataset for analysis
+### print descriptive statistics and plot dataset 
 #     Copyright (C) 2021  Leonardo Jost
 # 
 # This program is free software: you can redistribute it and/or modify
@@ -20,6 +20,27 @@ dir.create("figs/MR")
 
 #load full dataset
 datasetAnalysis=read.csv(file="dataset\\dataset.csv",sep=";")
+#print descriptive statistics
+outliers=unique(datasetAnalysis[which(datasetAnalysis$outlier),c("ID","STEM","Experience","sex")])
+n_occur=data.frame(table(paste(outliers$STEM,paste(outliers$Experience,outliers$sex))))
+print(n_occur)
+##number of each combination of between factors
+datasetBetweenFactors=unique(datasetAnalysis[,c("ID","sex","STEM","Experience")])
+nrow(datasetBetweenFactors)
+n_occur=data.frame(table(paste(datasetBetweenFactors$sex,paste(datasetBetweenFactors$STEM,datasetBetweenFactors$Experience))))
+print(n_occur)
+
+#number of each combination of between factors
+datasetBetweenFactors=unique(datasetAnalysis[,c("ID","sex","Experience")])
+nrow(datasetBetweenFactors)
+n_occur=data.frame(table(paste(datasetBetweenFactors$sex,datasetBetweenFactors$Experience)))
+print(n_occur)
+
+#overall outliers
+outlierIDs=unique(datasetAnalysis[,c("outlier","ID","sex")])
+n_occur=data.frame(table(paste(outlierIDs$outlier,outlierIDs$sex)))
+print(n_occur)
+
 #remove outliers
 datasetAnalysis=datasetAnalysis[which(!datasetAnalysis$outlier & !is.na(datasetAnalysis$sex)),]
 

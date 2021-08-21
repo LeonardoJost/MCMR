@@ -315,3 +315,24 @@ exact_result <- ANOVA_exact(design_result,
                             verbose=F)
 exact_result$main_results
 exact_result$main_results$cohen_f[3]+exact_result$main_results$cohen_f[5]
+
+#larger effect sizes
+mu <- c(1.45,1.45,1.45,1.45,1.45,1.45,1.195,0.94,0.685,1.45,1.44,1.43)
+n <- 50
+sd <- 0.73
+r <- 0.66
+string = "2b*2w*3w"
+alpha_level <- 0.05
+labelnames = c("sex","m","f","type","mixed","pairwise","nStim","2","4","8")
+design_result <- ANOVA_design(design = string,
+                              n = n, 
+                              mu = mu, 
+                              sd = sd, 
+                              r = r,
+                              labelnames = labelnames,
+                              plot=T)
+#design_result
+exact_result <- ANOVA_exact(design_result,
+                            alpha_level = alpha_level,
+                            verbose=F)
+exact_result$main_results

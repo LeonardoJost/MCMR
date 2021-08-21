@@ -52,6 +52,16 @@ generateData=function(n,N,numberOfEachTrial,sd=0.73,sd2=0.34) {
   testdata$baseProbID=rep(rnorm(n),each=N/n)*sqrt(0.66)*sd
   #get probability from log odds
   testdata$logOdds=testdata$baseProb+testdata$baseProbID+rnorm(N)*sqrt(sd2)*sd
+  #generate random order of blocks 
+  testdata$block=as.vector(replicate(N/6,sample(c(0:5))))/5
+  blockFactor=sapply(as.factor(testdata$block),function(i) contr.sum(6)[i,])
+  testdata$blockFactor1=blockFactor[1,]
+  testdata$blockFactor2=blockFactor[2,]
+  testdata$blockFactor3=blockFactor[3,]
+  testdata$blockFactor4=blockFactor[4,]
+  testdata$blockFactor5=blockFactor[5,]
+  #add small effect of block (to prevent too many convergence issues)
+  testdata$logOdds=testdata$logOdds+sqrt(testdata$block)/5*rep(rnorm(n),each=N/n)
   #convert to probability
   testdata$prob=exp(testdata$logOdds)/(1+exp(testdata$logOdds))
   #generate number of correct responses
@@ -62,15 +72,12 @@ generateData=function(n,N,numberOfEachTrial,sd=0.73,sd2=0.34) {
   testdata$weights=rep(numberOfEachTrial,N)
   #generate correct responses
   testdata$correctResponses=rbinom(N,size=testdata$weights,prob=testdata$prob)/testdata$weights
-  #generate random order of blocks (with no learning overall)
-  testdata$block=as.vector(replicate(N/6,sample(6)))
-  testdata$blockFactor=as.factor(testdata$block)
   return(testdata)
 }
 
 #get p values of effects of interest
 getSignificant=function(testdata){
-  glmerModel=glmer(correctResponses~sexNumeric*nStimuliNumeric1*typeNumeric+sexNumeric*nStimuliNumeric2*typeNumeric+(1|ids),
+  glmerModel=glmer(correctResponses~sexNumeric*nStimuliNumeric1*typeNumeric+sexNumeric*nStimuliNumeric2*typeNumeric+block+(1|ids),
                     family=binomial(),data=testdata,weights=weights,
                     control = glmerControl(optimizer = "optimx",optCtrl = list(method = "bobyqa")))
   glmerModel1=update(glmerModel,formula = ~. -sexNumeric:nStimuliNumeric1:typeNumeric-sexNumeric:nStimuliNumeric2:typeNumeric)
@@ -81,18 +88,26 @@ getSignificant=function(testdata){
            anova(glmerModel,glmerModel3)$"Pr(>Chisq)"[2]))
 }
 getSignificantWithOrder=function(testdata){
-  glmerModel=glmer(correctResponses~sexNumeric*nStimuliNumeric1*typeNumeric+sexNumeric*nStimuliNumeric2*typeNumeric+(block|ids),
+  glmerModel=glmer(correctResponses~sexNumeric*nStimuliNumeric1*typeNumeric+sexNumeric*nStimuliNumeric2*typeNumeric+block+(block|ids),
                    family=binomial(),data=testdata,weights=weights,
                    control = glmerControl(optimizer = "optimx",optCtrl = list(method = "bobyqa")))
+  if (isSingular(glmerModel))
+    return(c(-1,-1,-1))
   glmerModel1=update(glmerModel,formula = ~. -sexNumeric:nStimuliNumeric1:typeNumeric-sexNumeric:nStimuliNumeric2:typeNumeric)
+  if (isSingular(glmerModel)| isSingular(glmerModel1))
+    return(c(-1,-1,-1))
   glmerModel2=update(glmerModel,formula = ~. -sexNumeric:nStimuliNumeric1-sexNumeric:nStimuliNumeric2)
+  if (isSingular(glmerModel)| isSingular(glmerModel1)| isSingular(glmerModel2))
+    return(c(-1,-1,-1))
   glmerModel3=update(glmerModel,formula = ~. -sexNumeric:typeNumeric)
+  if (isSingular(glmerModel)| isSingular(glmerModel1)| isSingular(glmerModel2)| isSingular(glmerModel3))
+    return(c(-1,-1,-1))
   return(c(anova(glmerModel,glmerModel1)$"Pr(>Chisq)"[2],
            anova(glmerModel,glmerModel2)$"Pr(>Chisq)"[2],
            anova(glmerModel,glmerModel3)$"Pr(>Chisq)"[2]))
 }
 getSignificantWithOrderFactor=function(testdata){
-  glmerModel=glmer(correctResponses~sexNumeric*nStimuliNumeric1*typeNumeric+sexNumeric*nStimuliNumeric2*typeNumeric+(blockFactor|ids),
+  glmerModel=glmer(correctResponses~sexNumeric*nStimuliNumeric1*typeNumeric+sexNumeric*nStimuliNumeric2*typeNumeric+block+(blockFactor1+blockFactor2+blockFactor3+blockFactor4+blockFactor5|ids),
                    family=binomial(),data=testdata,weights=weights,
                    control = glmerControl(optimizer = "optimx",optCtrl = list(method = "bobyqa")))
   glmerModel1=update(glmerModel,formula = ~. -sexNumeric:nStimuliNumeric1:typeNumeric-sexNumeric:nStimuliNumeric2:typeNumeric)
@@ -117,29 +132,29 @@ randSim=function(ns,numberOfEachTrials=c(1),reps=1000,sd=0.73,sd2=0.34){
                                   propSignificant=rep(0,length(ns)*3*numTrials))
   for(numberOfEachTrial in numberOfEachTrials){
     for(n in ns) {
-      #to get some sense of progress
-      print(n)
       #every combination (3 nStimuli*2 types=6) twice
       N=n*6
       significant = matrix(nrow=reps, ncol=9)
       #repeatedly simulate data and get results
       for(i in 1:reps){
+        #to get some sense of progress
+        print(i)
         testdata=generateData(n,N,numberOfEachTrial,sd,sd2)
-        significant[i,1:3]=getSignificant(testdata)<0.05
-        significant[i,4:6]=getSignificantWithOrder(testdata)<0.05
-        significant[i,7:9]=getSignificantWithOrderFactor(testdata)<0.05
+        significant[i,1:3]=getSignificant(testdata)
+        significant[i,4:6]=getSignificantWithOrder(testdata)
+        #significant[i,7:9]=getSignificantWithOrderFactor(testdata)
       }
 
       #save proportion to data frame
-      significantDataFrame$propSignificant[which(significantDataFrame$numberOfEachTrial==numberOfEachTrial & significantDataFrame$n==n & significantDataFrame$effects=="sex*nStimuli*type")]=
-        sum(significant[,1])/reps
-      significantDataFrame$propSignificant[which(significantDataFrame$numberOfEachTrial==numberOfEachTrial & significantDataFrame$n==n & significantDataFrame$effects=="sex*nStimuli")]=
-        sum(significant[,2])/reps
-      significantDataFrame$propSignificant[which(significantDataFrame$numberOfEachTrial==numberOfEachTrial & significantDataFrame$n==n & significantDataFrame$effects=="sex*type")]=
-        sum(significant[,3])/reps
+      # significantDataFrame$propSignificant[which(significantDataFrame$numberOfEachTrial==numberOfEachTrial & significantDataFrame$n==n & significantDataFrame$effects=="sex*nStimuli*type")]=
+      #   sum(significant[,1])/reps
+      # significantDataFrame$propSignificant[which(significantDataFrame$numberOfEachTrial==numberOfEachTrial & significantDataFrame$n==n & significantDataFrame$effects=="sex*nStimuli")]=
+      #   sum(significant[,2])/reps
+      # significantDataFrame$propSignificant[which(significantDataFrame$numberOfEachTrial==numberOfEachTrial & significantDataFrame$n==n & significantDataFrame$effects=="sex*type")]=
+      #   sum(significant[,3])/reps
     }
   }
-  return(significantDataFrame)
+  return(significant)
 }
 
 ###script
@@ -150,14 +165,25 @@ library(optimx)
 library(ggplot2)
 
 #generate random seed (this should be random enough)
-sample(0:100000,1)
+#sample(0:100000,1)
 #42849
 set.seed(42849)
 
 #get power for simulated binomial distributions
 numberOfEachTrials=c(24)
-significantDataFrame=randSim(ns=c(100),F,numberOfEachTrials,1000,0.73,0)
+significantDataFrame=randSim(ns=c(200),numberOfEachTrials,1000,0.73,0)
 
+ps=significantDataFrame[which(significantDataFrame[,4]>0),1:6]
+plot(ps[,1]~ps[,4])
+plot(ps[,2]~ps[,5])
+plot(ps[,3]~ps[,6])
+pComparison=data.frame(p=(1:100)/100,interaction1=rep(0,100),interaction2=rep(0,100),interaction3=rep(0,100))
+for(i in 1:nrow(pComparison)){
+  belowBoundary=colSums(ps<pComparison$p[i])
+  pComparison$interaction1[i]=belowBoundary[1]-belowBoundary[4]
+  pComparison$interaction2[i]=belowBoundary[2]-belowBoundary[5]
+  pComparison$interaction3[i]=belowBoundary[3]-belowBoundary[6]
+}
 #plot by number of trials
 ggplot(significantDataFrame,aes(x=numberOfEachTrial,y=propSignificant,color=effects)) +
   geom_point() + geom_line() + labs(y="simulated power", x="trials per test") +
@@ -167,4 +193,3 @@ ggsave(paste("figs/SimulPowerTrials.png",sep=""))
 #save data
 write.table(significantDataFrame,file="simulPowerOrder.csv",sep=";", row.names = FALSE)
 
-testdata=generateData(100,600,24,0.73,0)
