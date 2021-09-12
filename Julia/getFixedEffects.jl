@@ -21,6 +21,7 @@ using DataFrames
 using DataFramesMeta
 using Gadfly
 using CSV
+using Statistics
 
 #read data
 dataset=CSV.read("dataset\\dataset.csv", DataFrame)
@@ -39,11 +40,21 @@ end
 #add block as numeric variable
 dataset.blockNumeric=tryparse.(Int,chop.(dataset.block,head=4,tail=0))
 dataset.nStimuliFactor=string.(dataset.nStimuli)
-#scaling deg and block to 0..1
-dataset.deg=dataset.deg.-minimum(dataset.deg)
-dataset.blockNumeric=dataset.blockNumeric.-minimum(dataset.blockNumeric)
-dataset.deg=dataset.deg./maximum(dataset.deg)
-dataset.blockNumeric=dataset.blockNumeric./maximum(dataset.blockNumeric)
+#sclaing, centering function
+function centerNormalize(vector)
+  vector=vector.-minimum(vector)
+  vector=vector./maximum(vector)
+  vector=vector.-mean(vector)
+end
+
+#scaling numerical values to 0..1 (centered)
+dataset.deg=centerNormalize(dataset.deg)
+dataset.blockNumeric=centerNormalize(dataset.blockNumeric)
+dataset.trialNumber=centerNormalize(dataset.trialNumber)
+dataset.nStimuli=centerNormalize(dataset.nStimuli)
+#center uneven STEM distributions (get average effects instead of main effects)
+dataset.STEMContrasts1=centerNormalize(dataset.STEMContrasts1)
+dataset.STEMContrasts2=centerNormalize(dataset.STEMContrasts2)
 
 dataset.responseCorrect=dataset.type.=="hit"
 
@@ -96,51 +107,54 @@ modelFormula=@formula(responseCorrect~STEMContrasts2*ExperienceContrasts*sexCont
               (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
               (Experience|modelNumber))
 @elapsed gm05=fit(MixedModel,modelFormula,dataset,Binomial())
+#reduce nStimuli to numeric
+modelFormula=@formula(responseCorrect~STEMContrasts2*ExperienceContrasts*sexContrasts*nStimuli*typeContrasts+
+              STEMContrasts1*sexContrasts*nStimuli*typeContrasts+
+              blockNumeric+deg+trialNumber+
+              (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
+              (Experience|modelNumber))
+@elapsed gm06=fit(MixedModel,modelFormula,dataset,Binomial())
 #comparison
 show(MixedModels.likelihoodratiotest(gm0,gm01))
 show(MixedModels.likelihoodratiotest(gm0,gm02))
 show(MixedModels.likelihoodratiotest(gm0,gm03))
 show(MixedModels.likelihoodratiotest(gm0,gm04))
 show(MixedModels.likelihoodratiotest(gm0,gm05))
-#only gm02 n.s.
-gm1=gm02
+show(MixedModels.likelihoodratiotest(gm0,gm06))
+#gm02 n.s. and gm06 n.s. (gm02 is part of five-way interaction -> keep)
+gm1=gm06
 
 
 ##reduce gm1 by all possible fixed effects
-#STEMContrasts2*ExperienceContrasts*sexContrasts*nStimuliFactor*typeContrasts
-modelFormula=@formula(responseCorrect~ExperienceContrasts*sexContrasts*nStimuliFactor*typeContrasts+
-              STEMContrasts2*sexContrasts*nStimuliFactor*typeContrasts+
-              STEMContrasts2*ExperienceContrasts*nStimuliFactor*typeContrasts+
+#STEMContrasts2*ExperienceContrasts*sexContrasts*nStimuli*typeContrasts+
+modelFormula=@formula(responseCorrect~ExperienceContrasts*sexContrasts*nStimuli*typeContrasts+
+              STEMContrasts2*sexContrasts*nStimuli*typeContrasts+
+              STEMContrasts2*ExperienceContrasts*nStimuli*typeContrasts+
               STEMContrasts2*ExperienceContrasts*sexContrasts*typeContrasts+
-              STEMContrasts2*ExperienceContrasts*sexContrasts*nStimuliFactor+
-              STEMContrasts1*nStimuliFactor*typeContrasts+
-              STEMContrasts1*sexContrasts*typeContrasts+
-              STEMContrasts1*sexContrasts*nStimuliFactor+
+              STEMContrasts2*ExperienceContrasts*sexContrasts*nStimuli+
+              STEMContrasts1*sexContrasts*nStimuli*typeContrasts+
               blockNumeric+deg+trialNumber+
               (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
               (Experience|modelNumber))
 @elapsed gm11=fit(MixedModel,modelFormula,dataset,Binomial())
-#STEMContrasts1*nStimuliFactor*typeContrasts
-modelFormula=@formula(responseCorrect~STEMContrasts2*ExperienceContrasts*sexContrasts*nStimuliFactor*typeContrasts+
-              STEMContrasts1*sexContrasts*typeContrasts+
-              STEMContrasts1*sexContrasts*nStimuliFactor+
-              blockNumeric+deg+trialNumber+
+#blockNumeric
+modelFormula=@formula(responseCorrect~STEMContrasts2*ExperienceContrasts*sexContrasts*nStimuli*typeContrasts+
+              STEMContrasts1*sexContrasts*nStimuli*typeContrasts+
+              deg+trialNumber+
               (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
               (Experience|modelNumber))
 @elapsed gm12=fit(MixedModel,modelFormula,dataset,Binomial())
-#STEMContrasts1*sexContrasts*typeContrasts
-modelFormula=@formula(responseCorrect~STEMContrasts2*ExperienceContrasts*sexContrasts*nStimuliFactor*typeContrasts+
-              STEMContrasts1*nStimuliFactor*typeContrasts+
-              STEMContrasts1*sexContrasts*nStimuliFactor+
-              blockNumeric+deg+trialNumber+
+#deg
+modelFormula=@formula(responseCorrect~STEMContrasts2*ExperienceContrasts*sexContrasts*nStimuli*typeContrasts+
+              STEMContrasts1*sexContrasts*nStimuli*typeContrasts+
+              blockNumeric+trialNumber+
               (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
               (Experience|modelNumber))
 @elapsed gm13=fit(MixedModel,modelFormula,dataset,Binomial())
-#STEMContrasts1*sexContrasts*nStimuliFactor
-modelFormula=@formula(responseCorrect~STEMContrasts2*ExperienceContrasts*sexContrasts*nStimuliFactor*typeContrasts+
-              STEMContrasts1*nStimuliFactor*typeContrasts+
-              STEMContrasts1*sexContrasts*typeContrasts+
-              blockNumeric+deg+trialNumber+
+#trialNumber
+modelFormula=@formula(responseCorrect~STEMContrasts2*ExperienceContrasts*sexContrasts*nStimuli*typeContrasts+
+              STEMContrasts1*sexContrasts*nStimuli*typeContrasts+
+              blockNumeric+deg+
               (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
               (Experience|modelNumber))
 @elapsed gm14=fit(MixedModel,modelFormula,dataset,Binomial())
@@ -149,139 +163,113 @@ show(MixedModels.likelihoodratiotest(gm1,gm11))
 show(MixedModels.likelihoodratiotest(gm1,gm12))
 show(MixedModels.likelihoodratiotest(gm1,gm13))
 show(MixedModels.likelihoodratiotest(gm1,gm14))
-#largest p for gm12
-gm2=gm12
-##reduce gm2 by all possible fixed effects
-#STEMContrasts2*ExperienceContrasts*sexContrasts*nStimuliFactor*typeContrasts
-modelFormula=@formula(responseCorrect~ExperienceContrasts*sexContrasts*nStimuliFactor*typeContrasts+
-              STEMContrasts2*sexContrasts*nStimuliFactor*typeContrasts+
-              STEMContrasts2*ExperienceContrasts*nStimuliFactor*typeContrasts+
-              STEMContrasts2*ExperienceContrasts*sexContrasts*typeContrasts+
-              STEMContrasts2*ExperienceContrasts*sexContrasts*nStimuliFactor+
-              STEMContrasts1*sexContrasts*typeContrasts+
-              STEMContrasts1*sexContrasts*nStimuliFactor+
-              blockNumeric+deg+trialNumber+
-              (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
-              (Experience|modelNumber))
-@elapsed gm21=fit(MixedModel,modelFormula,dataset,Binomial())
-#STEMContrasts1*sexContrasts*typeContrasts
-modelFormula=@formula(responseCorrect~STEMContrasts2*ExperienceContrasts*sexContrasts*nStimuliFactor*typeContrasts+
-              STEMContrasts1*typeContrasts+
-              STEMContrasts1*sexContrasts*nStimuliFactor+
-              blockNumeric+deg+trialNumber+
-              (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
-              (Experience|modelNumber))
-@elapsed gm22=fit(MixedModel,modelFormula,dataset,Binomial())
-#STEMContrasts1*sexContrasts*nStimuliFactor
-modelFormula=@formula(responseCorrect~STEMContrasts2*ExperienceContrasts*sexContrasts*nStimuliFactor*typeContrasts+
-              STEMContrasts1*sexContrasts*typeContrasts+
-              STEMContrasts1*nStimuliFactor+
-              blockNumeric+deg+trialNumber+
-              (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
-              (Experience|modelNumber))
-@elapsed gm23=fit(MixedModel,modelFormula,dataset,Binomial())
-#comparison
-show(MixedModels.likelihoodratiotest(gm2,gm21))
-show(MixedModels.likelihoodratiotest(gm2,gm22))
-show(MixedModels.likelihoodratiotest(gm2,gm23))
-#only gm22 n.s.
-gm3=gm22
-##reduce gm3 by all possible fixed effects
-#STEMContrasts2*ExperienceContrasts*sexContrasts*nStimuliFactor*typeContrasts
-modelFormula=@formula(responseCorrect~ExperienceContrasts*sexContrasts*nStimuliFactor*typeContrasts+
-              STEMContrasts2*sexContrasts*nStimuliFactor*typeContrasts+
-              STEMContrasts2*ExperienceContrasts*nStimuliFactor*typeContrasts+
-              STEMContrasts2*ExperienceContrasts*sexContrasts*typeContrasts+
-              STEMContrasts2*ExperienceContrasts*sexContrasts*nStimuliFactor+
-              STEMContrasts1*typeContrasts+
-              STEMContrasts1*sexContrasts*nStimuliFactor+
-              blockNumeric+deg+trialNumber+
-              (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
-              (Experience|modelNumber))
-@elapsed gm31=fit(MixedModel,modelFormula,dataset,Binomial())
-#STEMContrasts1*typeContrasts
-modelFormula=@formula(responseCorrect~STEMContrasts2*ExperienceContrasts*sexContrasts*nStimuliFactor*typeContrasts+
-              STEMContrasts1*sexContrasts*nStimuliFactor+
-              blockNumeric+deg+trialNumber+
-              (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
-              (Experience|modelNumber))
-@elapsed gm32=fit(MixedModel,modelFormula,dataset,Binomial())
-#STEMContrasts1*sexContrasts*nStimuliFactor
-modelFormula=@formula(responseCorrect~STEMContrasts2*ExperienceContrasts*sexContrasts*nStimuliFactor*typeContrasts+
-              STEMContrasts1*typeContrasts+
-              STEMContrasts1*nStimuliFactor+
-              STEMContrasts1*sexContrasts+
-              blockNumeric+deg+trialNumber+
-              (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
-              (Experience|modelNumber))
-@elapsed gm33=fit(MixedModel,modelFormula,dataset,Binomial())
-#comparison
-show(MixedModels.likelihoodratiotest(gm3,gm31))
-show(MixedModels.likelihoodratiotest(gm3,gm32))
-show(MixedModels.likelihoodratiotest(gm3,gm33))
-#only gm32 n.s.
-gm4=gm32
-#STEMContrasts2*ExperienceContrasts*sexContrasts*nStimuliFactor*typeContrasts
-modelFormula=@formula(responseCorrect~ExperienceContrasts*sexContrasts*nStimuliFactor*typeContrasts+
-              STEMContrasts2*sexContrasts*nStimuliFactor*typeContrasts+
-              STEMContrasts2*ExperienceContrasts*nStimuliFactor*typeContrasts+
-              STEMContrasts2*ExperienceContrasts*sexContrasts*typeContrasts+
-              STEMContrasts2*ExperienceContrasts*sexContrasts*nStimuliFactor+
-              STEMContrasts1*sexContrasts*nStimuliFactor+
-              blockNumeric+deg+trialNumber+
-              (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
-              (Experience|modelNumber))
-@elapsed gm41=fit(MixedModel,modelFormula,dataset,Binomial())
-#STEMContrasts1*sexContrasts*nStimuliFactor
-modelFormula=@formula(responseCorrect~STEMContrasts2*ExperienceContrasts*sexContrasts*nStimuliFactor*typeContrasts+
-              STEMContrasts1*nStimuliFactor+
-              STEMContrasts1*sexContrasts+
-              blockNumeric+deg+trialNumber+
-              (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
-              (Experience|modelNumber))
-@elapsed gm42=fit(MixedModel,modelFormula,dataset,Binomial())
-#comparison
-show(MixedModels.likelihoodratiotest(gm4,gm41))
-show(MixedModels.likelihoodratiotest(gm4,gm42))
 #all significant
-#values for covariates
-#blockNumeric
-modelFormula=@formula(responseCorrect~STEMContrasts2*ExperienceContrasts*sexContrasts*nStimuliFactor*typeContrasts+
-              STEMContrasts1*sexContrasts*nStimuliFactor+
-              deg+trialNumber+
-              (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
-              (Experience|modelNumber))
-@elapsed gm43=fit(MixedModel,modelFormula,dataset,Binomial())
-#deg
-modelFormula=@formula(responseCorrect~STEMContrasts2*ExperienceContrasts*sexContrasts*nStimuliFactor*typeContrasts+
-              STEMContrasts1*sexContrasts*nStimuliFactor+
-              blockNumeric+trialNumber+
-              (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
-              (Experience|modelNumber))
-@elapsed gm44=fit(MixedModel,modelFormula,dataset,Binomial())
-#trialNumber
-modelFormula=@formula(responseCorrect~STEMContrasts2*ExperienceContrasts*sexContrasts*nStimuliFactor*typeContrasts+
-              STEMContrasts1*sexContrasts*nStimuliFactor+
-              blockNumeric+deg+
-              (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
-              (Experience|modelNumber))
-@elapsed gm45=fit(MixedModel,modelFormula,dataset,Binomial())
+#fully written
+modelFormula=@formula(responseCorrect ~ 1 + STEMContrasts2 + ExperienceContrasts + sexContrasts + nStimuli + typeContrasts + STEMContrasts1 + blockNumeric + deg + trialNumber + STEMContrasts2 & ExperienceContrasts + STEMContrasts2 & sexContrasts + ExperienceContrasts & sexContrasts + STEMContrasts2 & nStimuli + ExperienceContrasts & nStimuli + sexContrasts & nStimuli + STEMContrasts2 & typeContrasts + ExperienceContrasts & typeContrasts + sexContrasts & typeContrasts + nStimuli & typeContrasts + STEMContrasts1 & sexContrasts + STEMContrasts1 & nStimuli + STEMContrasts1 & typeContrasts + STEMContrasts2 & ExperienceContrasts & sexContrasts + STEMContrasts2 & ExperienceContrasts & nStimuli + STEMContrasts2 & sexContrasts & nStimuli + ExperienceContrasts & sexContrasts & nStimuli + STEMContrasts2 & ExperienceContrasts & typeContrasts + STEMContrasts2 & sexContrasts & typeContrasts + ExperienceContrasts & sexContrasts & typeContrasts + STEMContrasts2 & nStimuli & typeContrasts + ExperienceContrasts & nStimuli & typeContrasts + sexContrasts & nStimuli & typeContrasts + STEMContrasts1 & sexContrasts & nStimuli + STEMContrasts1 & sexContrasts & typeContrasts + STEMContrasts1 & nStimuli & typeContrasts + STEMContrasts2 & ExperienceContrasts & sexContrasts & nStimuli + STEMContrasts2 & ExperienceContrasts & sexContrasts & typeContrasts + STEMContrasts2 & ExperienceContrasts & nStimuli & typeContrasts + STEMContrasts2 & sexContrasts & nStimuli & typeContrasts + ExperienceContrasts & sexContrasts & nStimuli & typeContrasts + STEMContrasts1 & sexContrasts & nStimuli & typeContrasts + STEMContrasts2 & ExperienceContrasts & sexContrasts & nStimuli & typeContrasts + (1 + nStimuliFactor + typeContrasts + blockNumeric + trialNumber | ID) + (1 +
+Experience | modelNumber))
+#check for overall main effects of interest
+modelFormula=@formula(responseCorrect ~ 1 + STEMContrasts2 + ExperienceContrasts + sexContrasts + nStimuli + typeContrasts + STEMContrasts1 + blockNumeric + deg + trialNumber +
+STEMContrasts2 & ExperienceContrasts + STEMContrasts2 & sexContrasts + ExperienceContrasts & sexContrasts + STEMContrasts2 & nStimuli + ExperienceContrasts & nStimuli + sexContrasts & nStimuli + STEMContrasts2 & typeContrasts + ExperienceContrasts & typeContrasts + sexContrasts & typeContrasts + nStimuli & typeContrasts + STEMContrasts1 & sexContrasts + STEMContrasts1 & nStimuli + STEMContrasts1 & typeContrasts +
+STEMContrasts2 & ExperienceContrasts & sexContrasts + STEMContrasts2 & ExperienceContrasts & nStimuli + STEMContrasts2 & sexContrasts & nStimuli + ExperienceContrasts & sexContrasts & nStimuli + STEMContrasts2 & ExperienceContrasts & typeContrasts + STEMContrasts2 & sexContrasts & typeContrasts + ExperienceContrasts & sexContrasts & typeContrasts + STEMContrasts2 & nStimuli & typeContrasts + ExperienceContrasts & nStimuli & typeContrasts +
+#sexContrasts & nStimuli & typeContrasts +
+STEMContrasts1 & sexContrasts & nStimuli + STEMContrasts1 & sexContrasts & typeContrasts + STEMContrasts1 & nStimuli & typeContrasts +
+STEMContrasts2 & ExperienceContrasts & sexContrasts & nStimuli + STEMContrasts2 & ExperienceContrasts & sexContrasts & typeContrasts + STEMContrasts2 & ExperienceContrasts & nStimuli & typeContrasts + STEMContrasts2 & sexContrasts & nStimuli & typeContrasts + ExperienceContrasts & sexContrasts & nStimuli & typeContrasts + STEMContrasts1 & sexContrasts & nStimuli & typeContrasts +
+STEMContrasts2 & ExperienceContrasts & sexContrasts & nStimuli & typeContrasts +
+(1 + nStimuliFactor + typeContrasts + blockNumeric + trialNumber | ID) + (1 + Experience | modelNumber))
+@elapsed gm15=fit(MixedModel,modelFormula,dataset,Binomial())
+#sex*type
+modelFormula=@formula(responseCorrect ~ 1 + STEMContrasts2 + ExperienceContrasts + sexContrasts + nStimuli + typeContrasts + STEMContrasts1 + blockNumeric + deg + trialNumber +
+STEMContrasts2 & ExperienceContrasts + STEMContrasts2 & sexContrasts + ExperienceContrasts & sexContrasts + STEMContrasts2 & nStimuli + ExperienceContrasts & nStimuli + sexContrasts & nStimuli + STEMContrasts2 & typeContrasts + ExperienceContrasts & typeContrasts +
+#sexContrasts & typeContrasts +
+nStimuli & typeContrasts + STEMContrasts1 & sexContrasts + STEMContrasts1 & nStimuli + STEMContrasts1 & typeContrasts +
+STEMContrasts2 & ExperienceContrasts & sexContrasts + STEMContrasts2 & ExperienceContrasts & nStimuli + STEMContrasts2 & sexContrasts & nStimuli + ExperienceContrasts & sexContrasts & nStimuli + STEMContrasts2 & ExperienceContrasts & typeContrasts + STEMContrasts2 & sexContrasts & typeContrasts + ExperienceContrasts & sexContrasts & typeContrasts + STEMContrasts2 & nStimuli & typeContrasts + ExperienceContrasts & nStimuli & typeContrasts +
+sexContrasts & nStimuli & typeContrasts +
+STEMContrasts1 & sexContrasts & nStimuli + STEMContrasts1 & sexContrasts & typeContrasts + STEMContrasts1 & nStimuli & typeContrasts +
+STEMContrasts2 & ExperienceContrasts & sexContrasts & nStimuli + STEMContrasts2 & ExperienceContrasts & sexContrasts & typeContrasts + STEMContrasts2 & ExperienceContrasts & nStimuli & typeContrasts + STEMContrasts2 & sexContrasts & nStimuli & typeContrasts + ExperienceContrasts & sexContrasts & nStimuli & typeContrasts + STEMContrasts1 & sexContrasts & nStimuli & typeContrasts +
+STEMContrasts2 & ExperienceContrasts & sexContrasts & nStimuli & typeContrasts +
+(1 + nStimuliFactor + typeContrasts + blockNumeric + trialNumber | ID) + (1 + Experience | modelNumber))
+@elapsed gm16=fit(MixedModel,modelFormula,dataset,Binomial())
+#sex*nStimuli
+modelFormula=@formula(responseCorrect ~ 1 + STEMContrasts2 + ExperienceContrasts + sexContrasts + nStimuli + typeContrasts + STEMContrasts1 + blockNumeric + deg + trialNumber +
+STEMContrasts2 & ExperienceContrasts + STEMContrasts2 & sexContrasts + ExperienceContrasts & sexContrasts + STEMContrasts2 & nStimuli + ExperienceContrasts & nStimuli +
+#sexContrasts & nStimuli +
+STEMContrasts2 & typeContrasts + ExperienceContrasts & typeContrasts + sexContrasts & typeContrasts + nStimuli & typeContrasts + STEMContrasts1 & sexContrasts + STEMContrasts1 & nStimuli + STEMContrasts1 & typeContrasts +
+STEMContrasts2 & ExperienceContrasts & sexContrasts + STEMContrasts2 & ExperienceContrasts & nStimuli + STEMContrasts2 & sexContrasts & nStimuli + ExperienceContrasts & sexContrasts & nStimuli + STEMContrasts2 & ExperienceContrasts & typeContrasts + STEMContrasts2 & sexContrasts & typeContrasts + ExperienceContrasts & sexContrasts & typeContrasts + STEMContrasts2 & nStimuli & typeContrasts + ExperienceContrasts & nStimuli & typeContrasts +
+sexContrasts & nStimuli & typeContrasts +
+STEMContrasts1 & sexContrasts & nStimuli + STEMContrasts1 & sexContrasts & typeContrasts + STEMContrasts1 & nStimuli & typeContrasts +
+STEMContrasts2 & ExperienceContrasts & sexContrasts & nStimuli + STEMContrasts2 & ExperienceContrasts & sexContrasts & typeContrasts + STEMContrasts2 & ExperienceContrasts & nStimuli & typeContrasts + STEMContrasts2 & sexContrasts & nStimuli & typeContrasts + ExperienceContrasts & sexContrasts & nStimuli & typeContrasts + STEMContrasts1 & sexContrasts & nStimuli & typeContrasts +
+STEMContrasts2 & ExperienceContrasts & sexContrasts & nStimuli & typeContrasts +
+(1 + nStimuliFactor + typeContrasts + blockNumeric + trialNumber | ID) + (1 + Experience | modelNumber))
+@elapsed gm17=fit(MixedModel,modelFormula,dataset,Binomial())
+#sex
+modelFormula=@formula(responseCorrect ~ 1 + STEMContrasts2 + ExperienceContrasts +
+#sexContrasts +
+nStimuli + typeContrasts + STEMContrasts1 + blockNumeric + deg + trialNumber +
+STEMContrasts2 & ExperienceContrasts + STEMContrasts2 & sexContrasts + ExperienceContrasts & sexContrasts + STEMContrasts2 & nStimuli + ExperienceContrasts & nStimuli + sexContrasts & nStimuli + STEMContrasts2 & typeContrasts + ExperienceContrasts & typeContrasts + sexContrasts & typeContrasts + nStimuli & typeContrasts + STEMContrasts1 & sexContrasts + STEMContrasts1 & nStimuli + STEMContrasts1 & typeContrasts +
+STEMContrasts2 & ExperienceContrasts & sexContrasts + STEMContrasts2 & ExperienceContrasts & nStimuli + STEMContrasts2 & sexContrasts & nStimuli + ExperienceContrasts & sexContrasts & nStimuli + STEMContrasts2 & ExperienceContrasts & typeContrasts + STEMContrasts2 & sexContrasts & typeContrasts + ExperienceContrasts & sexContrasts & typeContrasts + STEMContrasts2 & nStimuli & typeContrasts + ExperienceContrasts & nStimuli & typeContrasts +
+sexContrasts & nStimuli & typeContrasts +
+STEMContrasts1 & sexContrasts & nStimuli + STEMContrasts1 & sexContrasts & typeContrasts + STEMContrasts1 & nStimuli & typeContrasts +
+STEMContrasts2 & ExperienceContrasts & sexContrasts & nStimuli + STEMContrasts2 & ExperienceContrasts & sexContrasts & typeContrasts + STEMContrasts2 & ExperienceContrasts & nStimuli & typeContrasts + STEMContrasts2 & sexContrasts & nStimuli & typeContrasts + ExperienceContrasts & sexContrasts & nStimuli & typeContrasts + STEMContrasts1 & sexContrasts & nStimuli & typeContrasts +
+STEMContrasts2 & ExperienceContrasts & sexContrasts & nStimuli & typeContrasts +
+(1 + nStimuliFactor + typeContrasts + blockNumeric + trialNumber | ID) + (1 + Experience | modelNumber))
+@elapsed gm18=fit(MixedModel,modelFormula,dataset,Binomial())
+#nStimuli*type
+modelFormula=@formula(responseCorrect ~ 1 + STEMContrasts2 + ExperienceContrasts +
+sexContrasts + nStimuli + typeContrasts + STEMContrasts1 + blockNumeric + deg + trialNumber +
+STEMContrasts2 & ExperienceContrasts + STEMContrasts2 & sexContrasts + ExperienceContrasts & sexContrasts + STEMContrasts2 & nStimuli + ExperienceContrasts & nStimuli + sexContrasts & nStimuli + STEMContrasts2 & typeContrasts + ExperienceContrasts & typeContrasts + sexContrasts & typeContrasts +
+#nStimuli & typeContrasts +
+STEMContrasts1 & sexContrasts + STEMContrasts1 & nStimuli + STEMContrasts1 & typeContrasts +
+STEMContrasts2 & ExperienceContrasts & sexContrasts + STEMContrasts2 & ExperienceContrasts & nStimuli + STEMContrasts2 & sexContrasts & nStimuli + ExperienceContrasts & sexContrasts & nStimuli + STEMContrasts2 & ExperienceContrasts & typeContrasts + STEMContrasts2 & sexContrasts & typeContrasts + ExperienceContrasts & sexContrasts & typeContrasts + STEMContrasts2 & nStimuli & typeContrasts + ExperienceContrasts & nStimuli & typeContrasts +
+sexContrasts & nStimuli & typeContrasts +
+STEMContrasts1 & sexContrasts & nStimuli + STEMContrasts1 & sexContrasts & typeContrasts + STEMContrasts1 & nStimuli & typeContrasts +
+STEMContrasts2 & ExperienceContrasts & sexContrasts & nStimuli + STEMContrasts2 & ExperienceContrasts & sexContrasts & typeContrasts + STEMContrasts2 & ExperienceContrasts & nStimuli & typeContrasts + STEMContrasts2 & sexContrasts & nStimuli & typeContrasts + ExperienceContrasts & sexContrasts & nStimuli & typeContrasts + STEMContrasts1 & sexContrasts & nStimuli & typeContrasts +
+STEMContrasts2 & ExperienceContrasts & sexContrasts & nStimuli & typeContrasts +
+(1 + nStimuliFactor + typeContrasts + blockNumeric + trialNumber | ID) + (1 + Experience | modelNumber))
+@elapsed gm19=fit(MixedModel,modelFormula,dataset,Binomial())
+#nStimuli
+modelFormula=@formula(responseCorrect ~ 1 + STEMContrasts2 + ExperienceContrasts + sexContrasts +
+#nStimuli +
+typeContrasts + STEMContrasts1 + blockNumeric + deg + trialNumber +
+STEMContrasts2 & ExperienceContrasts + STEMContrasts2 & sexContrasts + ExperienceContrasts & sexContrasts + STEMContrasts2 & nStimuli + ExperienceContrasts & nStimuli + sexContrasts & nStimuli + STEMContrasts2 & typeContrasts + ExperienceContrasts & typeContrasts + sexContrasts & typeContrasts + nStimuli & typeContrasts + STEMContrasts1 & sexContrasts + STEMContrasts1 & nStimuli + STEMContrasts1 & typeContrasts +
+STEMContrasts2 & ExperienceContrasts & sexContrasts + STEMContrasts2 & ExperienceContrasts & nStimuli + STEMContrasts2 & sexContrasts & nStimuli + ExperienceContrasts & sexContrasts & nStimuli + STEMContrasts2 & ExperienceContrasts & typeContrasts + STEMContrasts2 & sexContrasts & typeContrasts + ExperienceContrasts & sexContrasts & typeContrasts + STEMContrasts2 & nStimuli & typeContrasts + ExperienceContrasts & nStimuli & typeContrasts +
+sexContrasts & nStimuli & typeContrasts +
+STEMContrasts1 & sexContrasts & nStimuli + STEMContrasts1 & sexContrasts & typeContrasts + STEMContrasts1 & nStimuli & typeContrasts +
+STEMContrasts2 & ExperienceContrasts & sexContrasts & nStimuli + STEMContrasts2 & ExperienceContrasts & sexContrasts & typeContrasts + STEMContrasts2 & ExperienceContrasts & nStimuli & typeContrasts + STEMContrasts2 & sexContrasts & nStimuli & typeContrasts + ExperienceContrasts & sexContrasts & nStimuli & typeContrasts + STEMContrasts1 & sexContrasts & nStimuli & typeContrasts +
+STEMContrasts2 & ExperienceContrasts & sexContrasts & nStimuli & typeContrasts +
+(1 + nStimuliFactor + typeContrasts + blockNumeric + trialNumber | ID) + (1 + Experience | modelNumber))
+@elapsed gm110=fit(MixedModel,modelFormula,dataset,Binomial())
+#type
+modelFormula=@formula(responseCorrect ~ 1 + STEMContrasts2 + ExperienceContrasts + sexContrasts + nStimuli +
+#typeContrasts +
+STEMContrasts1 + blockNumeric + deg + trialNumber +
+STEMContrasts2 & ExperienceContrasts + STEMContrasts2 & sexContrasts + ExperienceContrasts & sexContrasts + STEMContrasts2 & nStimuli + ExperienceContrasts & nStimuli + sexContrasts & nStimuli + STEMContrasts2 & typeContrasts + ExperienceContrasts & typeContrasts + sexContrasts & typeContrasts + nStimuli & typeContrasts + STEMContrasts1 & sexContrasts + STEMContrasts1 & nStimuli + STEMContrasts1 & typeContrasts +
+STEMContrasts2 & ExperienceContrasts & sexContrasts + STEMContrasts2 & ExperienceContrasts & nStimuli + STEMContrasts2 & sexContrasts & nStimuli + ExperienceContrasts & sexContrasts & nStimuli + STEMContrasts2 & ExperienceContrasts & typeContrasts + STEMContrasts2 & sexContrasts & typeContrasts + ExperienceContrasts & sexContrasts & typeContrasts + STEMContrasts2 & nStimuli & typeContrasts + ExperienceContrasts & nStimuli & typeContrasts +
+sexContrasts & nStimuli & typeContrasts +
+STEMContrasts1 & sexContrasts & nStimuli + STEMContrasts1 & sexContrasts & typeContrasts + STEMContrasts1 & nStimuli & typeContrasts +
+STEMContrasts2 & ExperienceContrasts & sexContrasts & nStimuli + STEMContrasts2 & ExperienceContrasts & sexContrasts & typeContrasts + STEMContrasts2 & ExperienceContrasts & nStimuli & typeContrasts + STEMContrasts2 & sexContrasts & nStimuli & typeContrasts + ExperienceContrasts & sexContrasts & nStimuli & typeContrasts + STEMContrasts1 & sexContrasts & nStimuli & typeContrasts +
+STEMContrasts2 & ExperienceContrasts & sexContrasts & nStimuli & typeContrasts +
+(1 + nStimuliFactor + typeContrasts + blockNumeric + trialNumber | ID) + (1 + Experience | modelNumber))
+@elapsed gm111=fit(MixedModel,modelFormula,dataset,Binomial())
 #comparison
-show(MixedModels.likelihoodratiotest(gm4,gm43))
-show(MixedModels.likelihoodratiotest(gm4,gm44))
-show(MixedModels.likelihoodratiotest(gm4,gm45))
-
+show(MixedModels.likelihoodratiotest(gm1,gm15))
+show(MixedModels.likelihoodratiotest(gm1,gm16))
+show(MixedModels.likelihoodratiotest(gm1,gm17))
+show(MixedModels.likelihoodratiotest(gm1,gm18))
+show(MixedModels.likelihoodratiotest(gm1,gm19))
+show(MixedModels.likelihoodratiotest(gm1,gm110))
+show(MixedModels.likelihoodratiotest(gm1,gm111))
 
 #check for overall main effects of interest
-modelFormula=@formula(responseCorrect~sexContrasts*nStimuliFactor*typeContrasts+
+#disregard higher order interaction because of unequal distribution (average effects instead of main effects)
+modelFormula=@formula(responseCorrect~sexContrasts*nStimuli*typeContrasts+
               blockNumeric+deg+trialNumber+
               (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
               (Experience|modelNumber))
 @elapsed gm5=fit(MixedModel,modelFormula,dataset,Binomial())
 #without triple interaction
-modelFormula=@formula(responseCorrect~nStimuliFactor*typeContrasts+
+modelFormula=@formula(responseCorrect~nStimuli*typeContrasts+
               sexContrasts*typeContrasts+
-              sexContrasts*nStimuliFactor+
+              sexContrasts*nStimuli+
               blockNumeric+deg+trialNumber+
               (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
               (Experience|modelNumber))
@@ -294,20 +282,20 @@ gm6=gm51
 #nStimuliFactor*typeContrasts
 modelFormula=@formula(responseCorrect~
               sexContrasts*typeContrasts+
-              sexContrasts*nStimuliFactor+
+              sexContrasts*nStimuli+
               blockNumeric+deg+trialNumber+
               (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
               (Experience|modelNumber))
 @elapsed gm61=fit(MixedModel,modelFormula,dataset,Binomial())
 #sexContrasts*typeContrasts
-modelFormula=@formula(responseCorrect~nStimuliFactor*typeContrasts+
-              sexContrasts*nStimuliFactor+
+modelFormula=@formula(responseCorrect~nStimuli*typeContrasts+
+              sexContrasts*nStimuli+
               blockNumeric+deg+trialNumber+
               (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
               (Experience|modelNumber))
 @elapsed gm62=fit(MixedModel,modelFormula,dataset,Binomial())
 #sexContrasts*nStimuliFactor
-modelFormula=@formula(responseCorrect~nStimuliFactor*typeContrasts+
+modelFormula=@formula(responseCorrect~nStimuli*typeContrasts+
               sexContrasts*typeContrasts+
               blockNumeric+deg+trialNumber+
               (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
@@ -321,13 +309,13 @@ show(MixedModels.likelihoodratiotest(gm6,gm63))
 gm7=gm62
 #nStimuliFactor*typeContrasts
 modelFormula=@formula(responseCorrect~typeContrasts+
-              sexContrasts*nStimuliFactor+
+              sexContrasts*nStimuli+
               blockNumeric+deg+trialNumber+
               (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
               (Experience|modelNumber))
 @elapsed gm71=fit(MixedModel,modelFormula,dataset,Binomial())
 #sexContrasts*nStimuliFactor
-modelFormula=@formula(responseCorrect~nStimuliFactor*typeContrasts+
+modelFormula=@formula(responseCorrect~nStimuli*typeContrasts+
               sexContrasts+
               blockNumeric+deg+trialNumber+
               (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
@@ -339,14 +327,14 @@ show(MixedModels.likelihoodratiotest(gm7,gm72))
 #gm72 n.s.
 gm8=gm72
 #nStimuliFactor*typeContrasts
-modelFormula=@formula(responseCorrect~nStimuliFactor+typeContrasts+
+modelFormula=@formula(responseCorrect~nStimuli+typeContrasts+
               sexContrasts+
               blockNumeric+deg+trialNumber+
               (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
               (Experience|modelNumber))
 @elapsed gm81=fit(MixedModel,modelFormula,dataset,Binomial())
 #sexContrasts
-modelFormula=@formula(responseCorrect~nStimuliFactor*typeContrasts+
+modelFormula=@formula(responseCorrect~nStimuli*typeContrasts+
               blockNumeric+deg+trialNumber+
               (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
               (Experience|modelNumber))
@@ -356,7 +344,7 @@ show(MixedModels.likelihoodratiotest(gm8,gm81))
 show(MixedModels.likelihoodratiotest(gm8,gm82))
 #both significant
 #effect of type*sex
-modelFormula=@formula(responseCorrect~nStimuliFactor*typeContrasts+
+modelFormula=@formula(responseCorrect~nStimuli*typeContrasts+
               sexContrasts*typeContrasts+
               blockNumeric+deg+trialNumber+
               (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
