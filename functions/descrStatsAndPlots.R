@@ -66,8 +66,8 @@ ggplot(datasetByIDandBlock,aes(y=acc,x=nStimuli, fill=sex, shape=typeOfAlternati
   stat_summary(na.rm=TRUE, fun=mean, geom="point", size=2) +
   stat_summary(fun.data=mean_se,geom="errorbar",position = "dodge") +
   scale_x_continuous(breaks=c(2,4,8))+
-  labs(x="number of alternatives",y="Proportion of correct trials",color="sex",linetype="sex",shape="type of alternatives") + 
-  guides(fill=FALSE) + 
+  labs(x="Number of alternatives",y="Proportion of correct items",color="Sex",linetype="Sex",shape="Type of alternatives") + 
+  guides(fill="none") + 
   theme_classic() + theme(legend.position = "right")
 ggsave("figs/MR/LinePlot.png")
 #plot data as line graph separated by experience and stem
@@ -81,8 +81,8 @@ ggplot(datasetByIDandBlock,aes(y=acc,x=nStimuli, fill=sex, shape=typeOfAlternati
   stat_summary(fun.data=mean_se,geom="errorbar",position = "dodge") +
   scale_x_continuous(breaks=c(2,4,8))+
   facet_grid(Experience ~ STEM)+
-  labs(x="number of alternatives",y="Proportion of correct trials",color="sex",linetype="sex",shape="type of alternatives") + 
-  guides(fill=FALSE) + 
+  labs(x="Number of alternatives",y="Proportion of correct items",color="Sex",linetype="Sex",shape="Type of alternatives") + 
+  guides(fill="none") + 
   geom_text(data=plyr::count(datasetByIDandBlock, vars = c("Experience","STEM")), aes(x=6, y=0.5, label=paste0("n = ",freq/6)), colour="black", inherit.aes=FALSE, parse=FALSE)+
   theme_bw() + theme(legend.position = "right")
 ggsave("figs/MR/LinePlotInteraction.png")
