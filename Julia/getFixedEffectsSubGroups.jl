@@ -64,6 +64,12 @@ datasetNoExp=dataset[dataset[!,:Experience].=="no",:]
 datasetNoExpNoSTEM=datasetNoStem[datasetNoStem[!,:Experience].=="no",:]
 datasetExpNoSTEM=datasetNoStem[datasetNoStem[!,:Experience].=="yes",:]
 
+#subsets with only one type of alternatives
+datasetNoExpTypePaired=datasetNoExp[datasetNoExp[!,:typeOfAlternatives].=="paired",:]
+datasetNoExpTypeMixed=datasetNoExp[datasetNoExp[!,:typeOfAlternatives].=="mixed",:]
+datasetNoExpNoSTEMTypePaired=datasetNoExpNoSTEM[datasetNoExpNoSTEM[!,:typeOfAlternatives].=="paired",:]
+datasetNoExpNoSTEMTypeMixed=datasetNoExpNoSTEM[datasetNoExpNoSTEM[!,:typeOfAlternatives].=="mixed",:]
+
 #check for overall four way interaction in nonStem dataset
 modelFormula=@formula(responseCorrect~STEMContrasts1*sexContrasts*nStimuli*typeContrasts+
               STEMContrasts2*sexContrasts*nStimuli*typeContrasts+
@@ -266,3 +272,236 @@ blockNumeric + deg + trialNumber + nStimuli & typeContrasts + sexContrasts & typ
 show(MixedModels.likelihoodratiotest(noExpNoStem4,noExpNoStem43))
 show(MixedModels.likelihoodratiotest(noExpNoStem4,noExpNoStem44))
 show(MixedModels.likelihoodratiotest(noExpNoStem4,noExpNoStem45))
+
+#sex differences separated by type for noExp dataset
+#paired
+modelFormula=@formula(responseCorrect~STEMContrasts1*sexContrasts*nStimuli+
+              STEMContrasts2*sexContrasts*nStimuli+
+              blockNumeric+deg+trialNumber+
+              (nStimuliFactor+blockNumeric+trialNumber|ID)+
+              (1|modelNumber))
+@elapsed noExpTypePaired1=fit(MixedModel,modelFormula,datasetNoExpTypePaired,Binomial())
+#reduced
+modelFormula=@formula(responseCorrect~sexContrasts*nStimuli+
+              STEMContrasts1*nStimuli+
+              STEMContrasts1*sexContrasts+
+              STEMContrasts2*nStimuli+
+              STEMContrasts2*sexContrasts+
+              blockNumeric+deg+trialNumber+
+              (nStimuliFactor+blockNumeric+trialNumber|ID)+
+              (1|modelNumber))
+@elapsed noExpTypePaired11=fit(MixedModel,modelFormula,datasetNoExpTypePaired,Binomial())
+#comparison
+show(MixedModels.likelihoodratiotest(noExpTypePaired1,noExpTypePaired11))
+#n.s.
+noExpTypePaired2=noExpTypePaired11
+#reduce
+#sexContrasts*nStimuli
+modelFormula=@formula(responseCorrect~STEMContrasts1*nStimuli+
+              STEMContrasts1*sexContrasts+
+              STEMContrasts2*nStimuli+
+              STEMContrasts2*sexContrasts+
+              blockNumeric+deg+trialNumber+
+              (nStimuliFactor+blockNumeric+trialNumber|ID)+
+              (1|modelNumber))
+@elapsed noExpTypePaired21=fit(MixedModel,modelFormula,datasetNoExpTypePaired,Binomial())
+#STEMContrasts*nStimuli (both)
+modelFormula=@formula(responseCorrect~sexContrasts*nStimuli+
+              STEMContrasts1*sexContrasts+
+              STEMContrasts2*sexContrasts+
+              blockNumeric+deg+trialNumber+
+              (nStimuliFactor+blockNumeric+trialNumber|ID)+
+              (1|modelNumber))
+@elapsed noExpTypePaired22=fit(MixedModel,modelFormula,datasetNoExpTypePaired,Binomial())
+#TEMContrasts*sexContrasts (both)
+modelFormula=@formula(responseCorrect~sexContrasts*nStimuli+
+              STEMContrasts1*nStimuli+
+              STEMContrasts2*nStimuli+
+              blockNumeric+deg+trialNumber+
+              (nStimuliFactor+blockNumeric+trialNumber|ID)+
+              (1|modelNumber))
+@elapsed noExpTypePaired23=fit(MixedModel,modelFormula,datasetNoExpTypePaired,Binomial())
+#comparison
+show(MixedModels.likelihoodratiotest(noExpTypePaired2,noExpTypePaired21))
+show(MixedModels.likelihoodratiotest(noExpTypePaired2,noExpTypePaired22))
+show(MixedModels.likelihoodratiotest(noExpTypePaired2,noExpTypePaired23))
+#largest p for 21
+noExpTypePaired3=noExpTypePaired21
+#reduce
+#STEMContrasts*nStimuli
+modelFormula=@formula(responseCorrect~STEMContrasts1*sexContrasts+
+              STEMContrasts2*sexContrasts+
+              nStimuli+
+              blockNumeric+deg+trialNumber+
+              (nStimuliFactor+blockNumeric+trialNumber|ID)+
+              (1|modelNumber))
+@elapsed noExpTypePaired31=fit(MixedModel,modelFormula,datasetNoExpTypePaired,Binomial())
+#STEMContrasts*sexContrasts
+modelFormula=@formula(responseCorrect~STEMContrasts1*nStimuli+
+              STEMContrasts2*nStimuli+
+              sexContrasts+
+              blockNumeric+deg+trialNumber+
+              (nStimuliFactor+blockNumeric+trialNumber|ID)+
+              (1|modelNumber))
+@elapsed noExpTypePaired32=fit(MixedModel,modelFormula,datasetNoExpTypePaired,Binomial())
+#comparison
+show(MixedModels.likelihoodratiotest(noExpTypePaired3,noExpTypePaired31))
+show(MixedModels.likelihoodratiotest(noExpTypePaired3,noExpTypePaired32))
+#largest p for 31
+noExpTypePaired4=noExpTypePaired31
+#reduce
+#STEMContrasts*sexContrasts
+modelFormula=@formula(responseCorrect~STEMContrasts1+
+              STEMContrasts2+sexContrasts+
+              nStimuli+
+              blockNumeric+deg+trialNumber+
+              (nStimuliFactor+blockNumeric+trialNumber|ID)+
+              (1|modelNumber))
+@elapsed noExpTypePaired41=fit(MixedModel,modelFormula,datasetNoExpTypePaired,Binomial())
+#nStimuli
+modelFormula=@formula(responseCorrect~STEMContrasts1*sexContrasts+
+              STEMContrasts2*sexContrasts+
+              blockNumeric+deg+trialNumber+
+              (nStimuliFactor+blockNumeric+trialNumber|ID)+
+              (1|modelNumber))
+@elapsed noExpTypePaired42=fit(MixedModel,modelFormula,datasetNoExpTypePaired,Binomial())
+#comparison
+show(MixedModels.likelihoodratiotest(noExpTypePaired4,noExpTypePaired41))
+show(MixedModels.likelihoodratiotest(noExpTypePaired4,noExpTypePaired42))
+#largest p for 42
+noExpTypePaired5=noExpTypePaired42
+#reduce
+#STEMContrasts*sexContrasts
+modelFormula=@formula(responseCorrect~STEMContrasts1+
+              STEMContrasts2+sexContrasts+
+              blockNumeric+deg+trialNumber+
+              (nStimuliFactor+blockNumeric+trialNumber|ID)+
+              (1|modelNumber))
+@elapsed noExpTypePaired51=fit(MixedModel,modelFormula,datasetNoExpTypePaired,Binomial())
+#comparison
+show(MixedModels.likelihoodratiotest(noExpTypePaired5,noExpTypePaired51))
+#n.s.
+noExpTypePaired6=noExpTypePaired51
+#reduce
+#STEM
+modelFormula=@formula(responseCorrect~
+              sexContrasts+
+              blockNumeric+deg+trialNumber+
+              (nStimuliFactor+blockNumeric+trialNumber|ID)+
+              (1|modelNumber))
+@elapsed noExpTypePaired61=fit(MixedModel,modelFormula,datasetNoExpTypePaired,Binomial())
+#sex
+modelFormula=@formula(responseCorrect~STEMContrasts1+
+              STEMContrasts2+
+              blockNumeric+deg+trialNumber+
+              (nStimuliFactor+blockNumeric+trialNumber|ID)+
+              (1|modelNumber))
+@elapsed noExpTypePaired62=fit(MixedModel,modelFormula,datasetNoExpTypePaired,Binomial())
+#comparison
+show(MixedModels.likelihoodratiotest(noExpTypePaired6,noExpTypePaired61))
+show(MixedModels.likelihoodratiotest(noExpTypePaired6,noExpTypePaired62))
+#62 n.s.
+noExpTypePaired7=noExpTypePaired62
+#reduce
+#STEM
+modelFormula=@formula(responseCorrect~
+              blockNumeric+deg+trialNumber+
+              (nStimuliFactor+blockNumeric+trialNumber|ID)+
+              (1|modelNumber))
+@elapsed noExpTypePaired71=fit(MixedModel,modelFormula,datasetNoExpTypePaired,Binomial())
+#comparison
+show(MixedModels.likelihoodratiotest(noExpTypePaired7,noExpTypePaired71))
+#significant
+
+#mixed type
+modelFormula=@formula(responseCorrect~STEMContrasts1*sexContrasts*nStimuli+
+              STEMContrasts2*sexContrasts*nStimuli+
+              blockNumeric+deg+trialNumber+
+              (nStimuliFactor+blockNumeric+trialNumber|ID)+
+              (1|modelNumber))
+@elapsed noExpTypeMixed1=fit(MixedModel,modelFormula,datasetNoExpTypeMixed,Binomial())
+#reduced
+modelFormula=@formula(responseCorrect~sexContrasts*nStimuli+
+              STEMContrasts1*nStimuli+
+              STEMContrasts1*sexContrasts+
+              STEMContrasts2*nStimuli+
+              STEMContrasts2*sexContrasts+
+              blockNumeric+deg+trialNumber+
+              (nStimuliFactor+blockNumeric+trialNumber|ID)+
+              (1|modelNumber))
+@elapsed noExpTypeMixed11=fit(MixedModel,modelFormula,datasetNoExpTypeMixed,Binomial())
+#comparison
+show(MixedModels.likelihoodratiotest(noExpTypeMixed1,noExpTypeMixed11))
+#significant
+#effect of sex
+modelFormula=@formula(responseCorrect ~ 1 + STEMContrasts1  + nStimuli + STEMContrasts2 + blockNumeric + deg + trialNumber + STEMContrasts1 & sexContrasts + STEMContrasts1 & nStimuli + sexContrasts & nStimuli + STEMContrasts2 & sexContrasts + STEMContrasts2 & nStimuli + STEMContrasts1 & sexContrasts & nStimuli + STEMContrasts2 & sexContrasts & nStimuli + (1 + nStimuliFactor + blockNumeric
++ trialNumber | ID) + (1 | modelNumber)
+)
+@elapsed noExpTypeMixed12=fit(MixedModel,modelFormula,datasetNoExpTypeMixed,Binomial())
+#comparison
+show(MixedModels.likelihoodratiotest(noExpTypeMixed1,noExpTypeMixed12))
+
+
+#sex differences separated by type for noExpNoStem dataset
+#paired type
+modelFormula=@formula(responseCorrect~nStimuli+
+              sexContrasts+
+              blockNumeric+deg+trialNumber+
+              (nStimuliFactor+blockNumeric+trialNumber|ID)+
+              (1|modelNumber))
+@elapsed noExpNoStemTypePaired1=fit(MixedModel,modelFormula,datasetNoExpNoSTEMTypePaired,Binomial())
+#reduce
+#nStimuli
+modelFormula=@formula(responseCorrect~
+              sexContrasts+
+              blockNumeric+deg+trialNumber+
+              (nStimuliFactor+blockNumeric+trialNumber|ID)+
+              (1|modelNumber))
+@elapsed noExpNoStemTypePaired11=fit(MixedModel,modelFormula,datasetNoExpNoSTEMTypePaired,Binomial())
+#sexContrasts
+modelFormula=@formula(responseCorrect~nStimuli+
+              blockNumeric+deg+trialNumber+
+              (nStimuliFactor+blockNumeric+trialNumber|ID)+
+              (1|modelNumber))
+@elapsed noExpNoStemTypePaired12=fit(MixedModel,modelFormula,datasetNoExpNoSTEMTypePaired,Binomial())
+#comparison
+show(MixedModels.likelihoodratiotest(noExpNoStemTypePaired1,noExpNoStemTypePaired11))
+show(MixedModels.likelihoodratiotest(noExpNoStemTypePaired1,noExpNoStemTypePaired12))
+#largest p for 11
+noExpNoStemTypePaired2=noExpNoStemTypePaired11
+#reduce
+#sexContrasts
+modelFormula=@formula(responseCorrect~
+              blockNumeric+deg+trialNumber+
+              (nStimuliFactor+blockNumeric+trialNumber|ID)+
+              (1|modelNumber))
+@elapsed noExpNoStemTypePaired21=fit(MixedModel,modelFormula,datasetNoExpNoSTEMTypePaired,Binomial())
+#comparison
+show(MixedModels.likelihoodratiotest(noExpNoStemTypePaired2,noExpNoStemTypePaired21))
+#n.s.
+
+#mixed type
+modelFormula=@formula(responseCorrect~nStimuli+
+              sexContrasts+
+              blockNumeric+deg+trialNumber+
+              (nStimuliFactor+blockNumeric+trialNumber|ID)+
+              (1|modelNumber))
+@elapsed noExpNoStemTypeMixed1=fit(MixedModel,modelFormula,datasetNoExpNoSTEMTypeMixed,Binomial())
+#reduce
+#nStimuli
+modelFormula=@formula(responseCorrect~
+              sexContrasts+
+              blockNumeric+deg+trialNumber+
+              (nStimuliFactor+blockNumeric+trialNumber|ID)+
+              (1|modelNumber))
+@elapsed noExpNoStemTypeMixed11=fit(MixedModel,modelFormula,datasetNoExpNoSTEMTypeMixed,Binomial())
+#sexContrasts
+modelFormula=@formula(responseCorrect~nStimuli+
+              blockNumeric+deg+trialNumber+
+              (nStimuliFactor+blockNumeric+trialNumber|ID)+
+              (1|modelNumber))
+@elapsed noExpNoStemTypeMixed12=fit(MixedModel,modelFormula,datasetNoExpNoSTEMTypeMixed,Binomial())
+#comparison
+show(MixedModels.likelihoodratiotest(noExpNoStemTypeMixed1,noExpNoStemTypeMixed11))
+show(MixedModels.likelihoodratiotest(noExpNoStemTypeMixed1,noExpNoStemTypeMixed12))
+#both significant
