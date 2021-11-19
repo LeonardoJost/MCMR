@@ -56,8 +56,7 @@ datasetByIDandBlock=ddply(datasetByIDandTrial,
                           .(ID,block,Experience,STEM,sex,nStimuli,typeOfAlternatives),
                           summarize,
                           hitSum=sum(hits),
-                          acc=hitSum/24,
-                          n=paste("n = ", length(ID)/6))
+                          acc=hitSum/24)
 #save full dataset to csv
 library(ggplot2)
 #plot data as line graph (mean Data by degree and condition)
@@ -87,4 +86,61 @@ ggplot(datasetByIDandBlock,aes(y=acc,x=nStimuli, fill=sex, shape=typeOfAlternati
   theme_bw() + theme(legend.position = "right")
 ggsave("figs/MR/LinePlotInteraction.png")
 
+#overall cohens d
+datasetByIDandBlockNonStemNoExp=datasetByIDandBlock[which(datasetByIDandBlock$Experience=="no" & datasetByIDandBlock$STEM=="nonSTEM"),]
+getCohensD=function(testdata,nStim,typ,sdCalculated=FALSE){
+  meanM=mean(testdata$acc[which(testdata$nStimuli==nStim & testdata$sex=="male" & testdata$typeOfAlternatives==typ)],na.rm=T)
+  meanF=mean(testdata$acc[which(testdata$nStimuli==nStim & testdata$sex=="female" & testdata$typeOfAlternatives==typ)],na.rm=T)
+  if(sdCalculated){
+    sdM=testdata$accSd[which(testdata$nStimuli==nStim & testdata$sex=="male" & testdata$typeOfAlternatives==typ)]
+    sdF=testdata$accSd[which(testdata$nStimuli==nStim & testdata$sex=="female" & testdata$typeOfAlternatives==typ)]
+  } else {
+    sdM=sd(testdata$acc[which(testdata$nStimuli==nStim & testdata$sex=="male" & testdata$typeOfAlternatives==typ)],na.rm=T)
+    sdF=sd(testdata$acc[which(testdata$nStimuli==nStim & testdata$sex=="female" & testdata$typeOfAlternatives==typ)],na.rm=T)
+  }
+  return((meanM-meanF)/(sqrt((sdM^2+sdF^2)/2)))
+}
+getCohensD(datasetByIDandBlockNonStemNoExp,2,"paired")
+getCohensD(datasetByIDandBlockNonStemNoExp,2,"mixed")
+getCohensD(datasetByIDandBlockNonStemNoExp,4,"paired")
+getCohensD(datasetByIDandBlockNonStemNoExp,4,"mixed")
+getCohensD(datasetByIDandBlockNonStemNoExp,8,"paired")
+getCohensD(datasetByIDandBlockNonStemNoExp,8,"mixed")
 
+getCohensD(datasetByIDandBlock,2,"paired")
+getCohensD(datasetByIDandBlock,2,"mixed")
+getCohensD(datasetByIDandBlock,4,"paired")
+getCohensD(datasetByIDandBlock,4,"mixed")
+getCohensD(datasetByIDandBlock,8,"paired")
+getCohensD(datasetByIDandBlock,8,"mixed")
+
+source("functions/helpers.R")
+datasetByType=ddply(datasetByIDandBlock,
+                          .(Experience,STEM,sex,nStimuli,typeOfAlternatives),
+                          summarize,
+                          accSd=sd(acc),
+                          acc=mean(acc),
+                          accLogOdds=toLogOdds(acc))
+datasetByTypeNonStemNoExp=datasetByType[which(datasetByType$Experience=="no" & datasetByType$STEM=="nonSTEM"),]
+
+#within test correlation
+mixed2=datasetByIDandBlock$acc[which(datasetByIDandBlock$typeOfAlternatives=="mixed" & datasetByIDandBlock$nStimuli==2)]
+mixed4=datasetByIDandBlock$acc[which(datasetByIDandBlock$typeOfAlternatives=="mixed" & datasetByIDandBlock$nStimuli==4)]
+mixed8=datasetByIDandBlock$acc[which(datasetByIDandBlock$typeOfAlternatives=="mixed" & datasetByIDandBlock$nStimuli==8)]
+paired2=datasetByIDandBlock$acc[which(datasetByIDandBlock$typeOfAlternatives=="paired" & datasetByIDandBlock$nStimuli==2)]
+paired4=datasetByIDandBlock$acc[which(datasetByIDandBlock$typeOfAlternatives=="paired" & datasetByIDandBlock$nStimuli==4)]
+paired8=datasetByIDandBlock$acc[which(datasetByIDandBlock$typeOfAlternatives=="paired" & datasetByIDandBlock$nStimuli==8)]
+cor(matrix(c(mixed2,mixed4,mixed8,paired2,paired4,paired8),ncol=6))
+
+#anova
+summary(aov(acc~nStimuli*typeOfAlternatives*sex+Error(ID/(nStimuli*typeOfAlternatives)),data=datasetByIDandBlock))
+summary(aov(acc~nStimuli*typeOfAlternatives*sex+Error(ID/(nStimuli*typeOfAlternatives)),data=datasetByIDandBlockNonStemNoExp))
+
+#analyse log odds of accuracy
+datasetByIDandBlock$accLogOdds=toLogOdds(datasetByIDandBlock$acc)
+datasetByIDandBlock$accLogOdds[which(datasetByIDandBlock$accLogOdds>=10)]=9
+mean(datasetByIDandBlock$accLogOdds)
+sd(datasetByIDandBlock$accLogOdds)
+mean(datasetByIDandBlock$accLogOdds)+2*sd(datasetByIDandBlock$accLogOdds)
+sum(datasetByIDandBlock$accLogOdds>=10)
+sum(datasetByIDandBlock$accLogOdds<10)

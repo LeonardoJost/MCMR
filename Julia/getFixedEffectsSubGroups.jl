@@ -181,7 +181,6 @@ modelFormula=@formula(responseCorrect~nStimuliFactor*typeContrasts+
               (1|modelNumber))
 @elapsed noExpNoStem11=fit(MixedModel,modelFormula,datasetNoExpNoSTEM,Binomial())
 #nStimuli as numeric
-#check for overall main effects of interest
 modelFormula=@formula(responseCorrect~sexContrasts*nStimuli*typeContrasts+
               blockNumeric+deg+trialNumber+
               (nStimuliFactor+typeContrasts+blockNumeric+trialNumber|ID)+
