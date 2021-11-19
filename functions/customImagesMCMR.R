@@ -242,3 +242,53 @@ abline(h=290,col="white")
 image_write(img, path = paste(baseFolder,"Trials",".", fileFormat,sep=""), format = fileFormat)
 dev.off()
 gc()
+
+
+
+###trials for experiment 2 (use rotation order z,x,y)
+#positions:
+pos=matrix(c(
+  #2 paired
+  c(-1.5,0,3),
+  c(0,0,3),
+  c(1,0,3),
+  #4 unpaired
+  c(-1.5,0,2),
+  c(0,0,2),
+  c(1,0,2),
+  #8 paired
+  c(-1.5,0,0.5),
+  c(0,0,1),
+  c(1,0,1),
+  c(2,0,1),
+  c(3,0,1),
+  c(0,0,0),
+  c(1,0,0),
+  c(2,0,0),
+  c(3,0,0)),
+  nrow=3)
+#multiply
+pos=pos*7
+#shift
+pos=pos+c(0,0,0)
+pos=t(pos)
+angles=t(matrix(c(c(0,0,0),c(0,0,45),c(0,0,-45),
+                  c(0,0,45),c(0,0,90),c(0,0,-120),
+                  c(0,0,0),c(0,0,45),c(0,0,105),c(0,0,-210),c(0,0,-165),
+                  c(0,0,90),c(0,0,-75),c(0,0,180),c(0,0,315)),
+                nrow=3))
+orientations=c("a","a","b",
+               "a","a","b",
+               "a","a","b","b","b",
+               "a","b","a","a")
+img=showImages()
+#show figure
+#print(img)
+#trim and add border and separating lines
+img=image_draw(image_border(image_trim(img),"black","20x20"))
+abline(h=150,col="white")
+abline(h=290,col="white")
+#save image
+image_write(img, path = paste(baseFolder,"Trials2",".", fileFormat,sep=""), format = fileFormat)
+dev.off()
+gc()
