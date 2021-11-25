@@ -204,42 +204,4 @@ exact_result <- ANOVA_exact(design_result,
                             verbose=F)
 exact_result$main_results
 
-#same as between design
-sd = sqrt(varBetween)
-string = "2b*2b*2b"
-design_result <- ANOVA_design(design = string,
-                                                 n = n, 
-                                                 mu = mu, 
-                                                 sd = sd, 
-                                                 r = r,
-                                                 labelnames = labelnames,
-                                                 plot=F)
-#design_result
-exact_result <- ANOVA_exact(design_result,
-                            alpha_level = alpha_level,
-                            verbose=F)
-exact_result$main_results
-
-
-#accuracy
-library(Superpower)
-mu <- c(.862,.829,.833,.833,.821,.697,.841,.813)
-n <- 400
-sd <- 0.177
-r <- 0.44
-string = "2b*2w*2w"
-alpha_level <- 0.05
-labelnames = c("sex","m","f","type","mixed","pairwise","nStim","2","8")
-design_result <- ANOVA_design(design = string,
-                              n = n, 
-                              mu = mu, 
-                              sd = sd, 
-                              r = r,
-                              labelnames = labelnames,
-                              plot=F)
-#design_result
-exact_result <- ANOVA_exact(design_result,
-                            alpha_level = alpha_level,
-                            verbose=F)
-exact_result$main_results
 
