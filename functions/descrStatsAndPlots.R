@@ -86,6 +86,21 @@ ggplot(datasetByIDandBlock,aes(y=acc,x=nStimuli, fill=sex, shape=typeOfAlternati
   theme_bw() + theme(legend.position = "right")
 ggsave("figs/MR/LinePlotInteraction.png")
 
+#effect of angle
+#create dataset summarized by angle 
+datasetByIdAndDeg=ddply(datasetAnalysis,
+                        .(ID,Experience,STEM,sex,nStimuli,typeOfAlternatives,deg),
+                        summarize,
+                        hits=sum((type=="hit")),
+                        misses=sum((type=="incorrect")),
+                        acc=hits/(hits+misses))
+ggplot(datasetByIdAndDeg,aes(y=acc,x=deg)) +
+  stat_summary(na.rm=TRUE, fun=mean, geom="line") +
+  stat_summary(na.rm=TRUE, fun=mean, geom="point", size=2) +
+  stat_summary(fun.data=mean_se,geom="errorbar",position = "dodge") +
+  guides(fill="none") + 
+  theme_classic() + theme(legend.position = "right")
+ggsave("figs/MR/Angle.png")
 #overall cohens d
 datasetByIDandBlockNonStemNoExp=datasetByIDandBlock[which(datasetByIDandBlock$Experience=="no" & datasetByIDandBlock$STEM=="nonSTEM"),]
 getCohensD=function(testdata,nStim,typ,sdCalculated=FALSE){

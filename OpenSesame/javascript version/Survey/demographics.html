@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="javascript/jquery-3.1.1.min.js"></script>
+    <script src="survey-jquery/survey.jquery.js"></script>
+    <script src="jatos.js"></script>
+    <link rel="stylesheet" href="study.css">
+</head>
+
+<body>
+    <div id="demographics"></div>
+
+    <script>
+        jatos.onLoad(function () {
+			Survey.StylesManager.applyTheme("default");
+
+            window.survey = new Survey.Model({
+				locale: "de",
+				description: {
+					de: "Sie haben eine oder mehrere Fragen nicht beantwortet. Sind Sie sicher, dass Sie diese unbeantwortet lassen möchten?"
+				},
+				showQuestionNumbers: "off",
+                pages: [
+					{	
+						name:"demographics",
+						questions: [{
+								type: "html",
+								name: "welcomeText",
+								html: "Im Folgenden bitten wir Sie noch Fragen zu Ihrer Vorerfahrung mit mentalen Rotationsausgaben zu beantworten. Bitte beantworten Sie die Fragen ehrlich. All Ihre Daten sind anonym, sodass keine Rückschlüsse auf Ihre Person möglich sind."
+							},
+							{
+								name: "experience",
+								type: "radiogroup",
+								isRequired: true,
+								title: "Haben Sie bereits an einem anderen Experiment/Test teilgenommen, bei dem Sie ähnliche abstrakte Objekte im Kopf rotieren und vergleichen sollten?",
+								choices:[
+									{
+										value:"yes",
+										text:"Ja"
+									},
+									{
+										value:"no",
+										text:"Nein"
+									}									
+								]
+							},
+							{
+								name: "experienceChronic",
+								visibleIf:"{experience} = 'yes'",
+								enableIf:"{experience} = 'yes'",
+								type: "radiogroup",
+								isRequired: true,
+								title: "Haben Sie innerhalb des letzten Jahres an einem anderen Experiment/Test teilgenommen, bei dem Sie ähnliche abstrakte Objekte im Kopf rotieren und vergleichen sollten?",
+								choices:[
+									{
+										value:"yes",
+										text:"Ja, innerhalb des letzten Jahres."
+									},
+									{
+										value:"no",
+										text:"Nein, es ist schon länger als ein Jahr her."
+									}									
+								]
+							},
+							{
+								name: "experienceAcute",
+								visibleIf:"{experience} = 'yes'",
+								enableIf:"{experience} = 'yes'",
+								type: "radiogroup",
+								isRequired: true,
+								title: "Haben Sie bereits an mehr als drei Experimenten/Tests teilgenommen, bei dem Sie ähnliche abstrakte Objekte im Kopf rotieren und vergleichen sollten?",
+								choices:[
+									{
+										value:"yes",
+										text:"Ja, mehr als drei solche Experimente/Tests."
+									},
+									{
+										value:"no",
+										text:"Nein, drei oder weniger solche Experimente/Tests."
+									}									
+								]
+							}
+						]
+					}
+                ]
+            });
+
+            survey.onComplete.add(function (result) {
+                $("#demographics").hide(); // Hides the 'Thank you for completing ...' message
+				let surveyLog = JSON.stringify(result.data).substring(1);
+				surveyLog = "{\"workerId\":"+jatos.workerId+",\"qualityFail\":"+jatos.studySessionData.outlier+","+surveyLog;
+				//outlier and screenout detection
+				//outliers from OSWeb
+				if (jatos.studySessionData.outlier==1) {
+					//link for qualityFail
+					jatos.submitResultData(surveyLog,jatos.endStudyAndRedirect("https://mingle.respondi.com/s/1621225/ospe.php3?c_0002=3&return_tic=" + jatos.urlQueryParameters.tic));
+				} else { //screenout by experience
+					let expAcute=result.data.experienceAcute;
+					let expChronic=result.data.experienceChronic;
+					if (expAcute=="yes" || expChronic=="yes") {
+						//link for screenouts
+						jatos.submitResultData(surveyLog,jatos.endStudyAndRedirect("https://mingle.respondi.com/s/1621225/ospe.php3?c_0002=7&return_tic=" + jatos.urlQueryParameters.tic));
+					} else {
+						//add 1 to complete data for batch
+						jatos.batchSession.set("completeWorkers",jatos.batchSession.get("completeWorkers")+1);
+						//link for complete
+						jatos.submitResultData(surveyLog,jatos.endStudyAndRedirect("https://mingle.respondi.com/s/1621225/ospe.php3?c_0002=1&return_tic=" + jatos.urlQueryParameters.tic));
+					}
+				}
+            });
+
+            $("#demographics").Survey({
+                model: survey
+            });
+
+        });
+    </script>
+</body>
+
+</html>

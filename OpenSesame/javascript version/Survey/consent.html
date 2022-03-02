@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="javascript/jquery-3.1.1.min.js"></script>
+    <script src="survey-jquery/survey.jquery.js"></script>
+    <script src="jatos.js"></script>
+    <link rel="stylesheet" href="study.css">
+</head>
+
+<body>
+    <div id="consent"></div>
+
+    <script>
+        jatos.onLoad(function () {
+			Survey.StylesManager.applyTheme("default");
+			//check for number of participants 
+			if (jatos.batchSession.get("completeWorkers")>429){
+				//quotafull
+				window.survey = new Survey.Model({
+					locale: "de",
+					showQuestionNumbers: "off",
+					pages: [
+						{	
+							name:"infoQuotaFull",
+							title: "Information",
+							elements: [{
+								type: "html",
+								name: "infoQuotaFull",
+								html: "Liebe Studieninteressierte,<br><br>vielen Dank, dass Sie an unserem Experiment mitmachen möchten! Da wir mittlerweile die maximale Anzahl an Studienteilnehmerinnen und Studienteilnehmern erreicht haben, ist deshalb eine Teilnahme leider nicht mehr möglich. Wir bedanken uns dennoch für Ihre Bereitschaft. Bei etwaigen Fragen können Sie sich gerne bei uns melden (leonardo.jost@ur.de).<br><br>Vielen Dank!"
+							}]
+						}
+					]
+				});
+				survey.onComplete.add(function (result) {
+					$("#consent").hide(); // Hides the 'Thank you for completing ...' message
+					jatos.endStudyAndRedirect("https://mingle.respondi.com/s/1621225/ospe.php3?c_0002=2&return_tic=" + jatos.urlQueryParameters.tic);
+				});
+
+				$("#consent").Survey({
+					model: survey
+				});
+			} else {
+				
+
+				window.survey = new Survey.Model({
+					locale: "de",
+					description: {
+						de: "Sie haben eine oder mehrere Fragen nicht beantwortet. Sind Sie sicher, dass Sie diese unbeantwortet lassen möchten?"
+					},
+					showQuestionNumbers: "off",
+					pages: [
+						{	
+							name:"preInfo",
+							title: "Vorabinformation",
+							elements: [{
+								type: "html",
+								name: "preInfo",
+								html: "Vielen Dank für Ihre Bereitschaft zur Teilnahme an dem Experiment!<br><br>Hier sind noch einige Vorabinformationen zur Durchführung:<br>Bitte bearbeiten Sie das Experiment an einem PC oder Laptop.<br>Nehmen Sie sich ca. 15 Minuten Zeit und sorgen Sie für eine möglichst ungestörte Atmosphäre.<br>Lesen Sie die Instruktionen aufmerksam und sorgfältig.<br>Bitte bearbeiten Sie das Experiment alleine.<br><br>Wenn Sie jetzt keine Zeit haben oder das Experiment nicht bearbeiten möchten, können Sie gerne auch ein andermal teilnehmen.<br><br>Falls Fragen oder Probleme auftreten können Sie sich gerne per E-Mail an leonardo.jost@ur.de wenden."
+							}]
+						},
+						{
+							name: "info",
+							title: "Aufklärungsdokument",
+							elements: [{
+								type: "html",
+								name: "info",
+								html: "Liebe Studienteilnehmerin, lieber Studienteilnehmer,<br><br>das Experiment „Unterschiedliche Arten von mentalen Rotationsaufgaben“ wurde mit dem Ziel entworfen, Erkenntnis über Zusammenhänge<br>zwischen unterschiedlichen Aufgabentypen und mentaler Rotationsleistung zu gewinnen. Dazu sollen Sie in dem Experiment nach einer kurzen<br>Übungseinheit verschiedene mentale Rotationsaufgaben lösen. Bei diesen mentalen Rotationsaufgaben handelt es sich um kognitive Aufgaben,<br>bei denen Sie abstrakte Figuren im Kopf rotieren und vergleichen sollen. Vor den Aufgaben werden wir noch einigen demographische Daten von<br>Ihnen erheben. Das gesamte Experiment dauert ca. 15 Minuten.<br><br>Die im Folgenden erhobenen Daten werden ausschließlich für wissenschaftliche Zwecke verwendet. Es werden keine weiteren identifizierenden<br>Merkmale zu Ihrer Teilnahme gespeichert. Die Teilnahme am Experiment wird getrennt von den Daten an respondi übermittelt.<br>Dadurch ist keine Rückentschlüsselung Ihrer Daten mehr möglich. Die Ergebnisse dieser Studie werden ausschließlich anonymisiert veröffentlicht.<br><br>Es würde uns sehr freuen, wenn Sie an der Studie teilnehmen würden. Selbstverständlich kann das Experiment jederzeit abgebrochen und die bis<br>dahin erhobenen Daten gelöscht werden. Dadurch entstünden Ihnen keinerlei Nachteile."
+							}]
+						},
+						{
+							name:"consent",
+							title:"Einverständniserklärung",
+							elements:[{
+								type: "boolean",
+								name: "consent",
+								title: "Hiermit willige ich ein, an dem Experiment „Unterschiedliche Arten von mentalen Rotationsaufgaben“ teilzunehmen. Ich wurde für mich ausreichend über Ziele und Ablauf des Experiments informiert. Ich bin auch damit einverstanden,dass die Studienergebnisse in nicht rückentschlüsselbarer (anonymer) Form, die keinen Rückschluss auf mich zulassen, veröffentlicht werden. Mir ist bekannt, dass ich meine Einwilligung jederzeit ohne Angaben von Gründen und ohne nachteilige Folgen für mich zurückziehen kann. Das Experiment kann jederzeit abgebrochen werden, ohne dass mir ein Nachteil entsteht oder ich einen Grund anzugeben brauche. Dazu reicht es, das Browserfenster zu schließen.",
+								correctAnswer: true,
+								isRequired: true,
+								validators: [
+									{
+										type: "expression",
+										text: "Sie müssen sich mit den Bedingungen einverstanden erklären, um an der Studie teilnehmen zu können.",
+										expression: "{consent}==true"
+									}
+								],
+								labelTrue: "Ja",
+								labelFalse: "Nein"
+							}]
+						},
+						{
+							name:"demographics",
+							questions: [{
+									type: "html",
+									name: "welcomeText",
+									html: "Im Folgenden bitten wir Sie einige demographische Fragen zu beantworten. Bitte beantworten Sie die Fragen ehrlich. All Ihre Daten sind anonym, sodass keine Rückschlüsse auf Ihre Person möglich sind."
+								},
+								
+								{
+									name: "sex",
+									type: "radiogroup",
+									isRequired: true,
+									title: "Wie ist Ihr Geschlecht?",
+									choices: [
+										{
+											value: "male",
+											text: "Männlich"
+										},
+										{
+											value: "female",
+											text: "Weiblich"
+										},
+										{
+											value: "divers",
+											text: "Divers"
+										}
+									]
+								},
+								{
+									name: "age",
+									type: "text",
+									isRequired: true,
+									title: "Wie alt sind Sie?",
+									maxLength:3,
+									placeHolder:"...Jahre",
+									validators: [
+										{
+											type: "numeric",
+											text: "Bitte geben Sie ihr Alter als Zahl an",
+											minValue: 0,
+											maxValue: 150
+										}
+									]
+								},
+								{
+									name: "education",
+									type: "radiogroup",
+									isRequired: true,
+									title: "Was ist Ihr höchster Bildungsabschluss? (oder vergleichbar)",
+									choices: [
+										{
+											value: "Kein Schulabschluss",
+											text: "Kein Schulabschluss"
+										},
+										{
+											value: "Hauptschulabschluss",
+											text: "Hauptschulabschluss"
+										},
+										{
+											value: "Mittlere Reife",
+											text: "Mittlere Reife"
+										},
+										{
+											value: "Abitur",
+											text: "Abitur"
+										},
+										{
+											value: "Studium",
+											text: "Studium ohne Abschluss"
+										},
+										{
+											value: "Bachelor",
+											text: "Bachelor"
+										},
+										{
+											value: "Master/Diplom",
+											text: "Master/Diplom"
+										},
+										{
+											value: "Promotion",
+											text: "Promotion"
+										}
+									]
+								},
+								{
+									name: "study",
+									visibleIf:"{education} = 'Studium' or {education} = 'Bachelor' or {education} = 'Master/Diplom' or {education} = 'Promotion'",
+									enableIf:"{education} = 'Studium' or {education} = 'Bachelor' or {education} = 'Master/Diplom' or {education} = 'Promotion'",
+									type: "checkbox",
+									isRequired: true,
+									title: "Bitte wählen Sie alle Bereiche aus in denen Sie als Hauptfach studieren/studiert haben.",
+									choices:[
+										{
+											value: "EventTourismusHotel ",
+											text: "Event, Tourismus & Hotel "
+										},
+										{
+											value: "GesellschaftsSozialwissenschaften",
+											text: "Gesellschafts- & Sozialwissenschaften"
+										},
+										{
+											value: "GesundheitMedizin",
+											text: "Gesundheit & Medizin"
+										},
+										{
+											value: "Informatik",
+											text: "Informatik"
+										},
+										{
+											value: "IngenieurwesenTechnik",
+											text: "Ingenieurwesen & Technik"
+										},
+										{
+											value: "KunstMusikDesignMode",
+											text: "Kunst, Musik, Design & Mode"
+										},
+										{
+											value: "LehramtPädagogik",
+											text: "Lehramt & Pädagogik"
+										},
+										{
+											value: "MedienKommunikationMarketing",
+											text: "Medien, Kommunikation & Marketing"
+										},
+										{
+											value: "NaturwissenschaftenMathematik",
+											text: "Naturwissenschaften & Mathematik"
+										},
+										{
+											value: "Psychologie",
+											text: "Psychologie"
+										},
+										{
+											value: "RechtSteuernVerwaltung",
+											text: "Recht, Steuern & Verwaltung"
+										},
+										{
+											value: "SportFitness",
+											text: "Sport & Fitness"
+										},
+										{
+											value: "SprachKulturwissenschaft",
+											text: "Sprach- & Kulturwissenschaft"
+										},
+										{
+											value: "UmweltAgrarForstwissenschaft",
+											text: "Umwelt-, Agrar- & Forstwissenschaft"
+										},
+										{
+											value: "WirtschaftManagement",
+											text: "Wirtschaft & Management"
+										},
+										{
+											value: "KeineAntwort",
+											text: "Keine der Antworten"
+										}
+									]
+								},
+								{
+									name: "work",
+									type: "checkbox",
+									isRequired: true,
+									title: "Bitte wählen Sie alle Bereiche aus in denen Sie als Hauptverdienst arbeiten/gearbeitet haben.",
+									choices:[
+										{
+											value: "EinzelGroßhandel",
+											text: "Einzel- & Großhandel"
+										},
+										{
+											value: "EventTourismusHotel ",
+											text: "Event, Tourismus & Hotel "
+										},
+										{
+											value: "GesellschaftsSozialwissenschaften",
+											text: "Gesellschafts- & Sozialwissenschaften"
+										},
+										{
+											value: "GesundheitMedizin",
+											text: "Gesundheit & Medizin"
+										},
+										{
+											value: "Handwerk",
+											text: "Handwerk"
+										},
+										{
+											value: "Informatik",
+											text: "Informatik"
+										},
+										{
+											value: "IngenieurwesenTechnik",
+											text: "Ingenieurwesen & Technik"
+										},
+										{
+											value: "KunstMusikDesignMode",
+											text: "Kunst, Musik, Design & Mode"
+										},
+										{
+											value: "LehramtPädagogik",
+											text: "Lehramt & Pädagogik"
+										},
+										{
+											value: "MedienKommunikationMarketing",
+											text: "Medien, Kommunikation & Marketing"
+										},
+										{
+											value: "NaturwissenschaftenMathematik",
+											text: "Naturwissenschaften & Mathematik"
+										},
+										{
+											value: "Psychologie",
+											text: "Psychologie"
+										},
+										{
+											value: "RechtSteuernVerwaltung",
+											text: "Recht, Steuern & Verwaltung"
+										},
+										{
+											value: "SportFitness",
+											text: "Sport & Fitness"
+										},
+										{
+											value: "SprachKulturbranche",
+											text: "Sprach- & Kulturbranche"
+										},
+										{
+											value: "UmweltAgrarForstbranche",
+											text: "Umwelt-, Agrar- & Forstbranche"
+										},
+										{
+											value: "WirtschaftManagement",
+											text: "Wirtschaft & Management"
+										},
+										{
+											value: "KeineAntwort",
+											text: "Keine der Antworten"
+										}
+									]
+								}
+							]
+						},
+						{	
+							name:"infoOsweb",
+							title: "Vorabinformation",
+							visibleIf: "!({study} contains 'IngenieurwesenTechnik' or {study} contains 'NaturwissenschaftenMathematik' or {study} contains 'Informatik' or {work} contains 'IngenieurwesenTechnik' or {work} contains 'NaturwissenschaftenMathematik' or {work} contains 'Informatik')",
+							enableIf: "!({study} contains 'IngenieurwesenTechnik' or {study} contains 'NaturwissenschaftenMathematik' or {study} contains 'Informatik' or {work} contains 'IngenieurwesenTechnik' or {work} contains 'NaturwissenschaftenMathematik' or {work} contains 'Informatik')",
+							elements: [{
+								type: "html",
+								name: "infoOsweb",
+								html: "Vielen Dank, dass Sie an dieser Studie teilnehmen! Als Nächstes beginnt der experimentelle Teil der Studie. <br>Bitte maximieren Sie dafür Ihr Browserfenster und drücken Sie F11 um den Vollbildmodus Ihres Browsers zu aktivieren (unter MacOS Strg+⌘+F).<br>(Sie können den Vollbildmodus wieder deaktivieren, wenn Sie nochmal F11 bzw. Strg+⌘+F drücken). <br><br>Bitte klicken Sie auf 'Abschließen'. Danach wird das Experiment laden. Nach dem Ladebildschirm können Sie mit einem Mausklick fortfahren."
+							}]
+						},
+					]
+				});
+
+				survey.onComplete.add(function (result) {
+					$("#consent").hide(); // Hides the 'Thank you for completing ...' message
+					let surveyLog = JSON.stringify(result.data).substring(1);
+					surveyLog = "{\"workerId\":"+jatos.workerId+",\"tic\":"+jatos.urlQueryParameters.tic+","+surveyLog;
+					//screenout by stem in either study or work
+					let study=result.data.study;
+					let work=result.data.work;
+					//if study was not enabled, set to empty array
+					if ( typeof study == "undefined") {
+						study=[];
+					}
+					if (study.includes("IngenieurwesenTechnik") || study.includes("NaturwissenschaftenMathematik") || study.includes("Informatik") || work.includes("IngenieurwesenTechnik") || work.includes("NaturwissenschaftenMathematik") || work.includes("Informatik"))  {
+						//link for screenouts (submit results for possible check of tics
+						jatos.submitResultData(surveyLog,jatos.endStudyAndRedirect("https://mingle.respondi.com/s/1621225/ospe.php3?c_0002=0&return_tic=" + jatos.urlQueryParameters.tic));
+					} else {
+						//continue to next component
+						jatos.submitResultData(surveyLog,jatos.startNextComponent);
+					}
+					//jatos.startNextComponent();
+				});
+
+				$("#consent").Survey({
+					model: survey
+				});
+			}
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="javascript/jquery-3.1.1.min.js"></script>
+    <script src="survey-jquery/survey.jquery.js"></script>
+    <script src="jatos.js"></script>
+    <link rel="stylesheet" href="study.css">
+</head>
+
+<body>
+    <div id="demographics"></div>
+
+    <script>
+        jatos.onLoad(function () {
+			Survey.StylesManager.applyTheme("default");
+
+            window.survey = new Survey.Model({
+				locale: "de",
+				description: {
+					de: "Sie haben eine oder mehrere Fragen nicht beantwortet. Sind Sie sicher, dass Sie diese unbeantwortet lassen möchten?"
+				},
+				showQuestionNumbers: "off",
+                pages: [
+					{	
+						name:"demographics",
+						questions: [{
+								type: "html",
+								name: "welcomeText",
+								html: "Im Folgenden bitten wir Sie einige demographische Fragen zu beantworten. Bitte beantworten Sie die Fragen ehrlich. All Ihre Daten sind anonym, sodass keine Rückschlüsse auf Ihre Person möglich sind."
+							},
+							{
+								name: "experience",
+								type: "radiogroup",
+								title: "Haben Sie bereits an einem anderen Experiment/Test teilgenommen, bei dem Sie ähnliche abstrakte Objekte im Kopf rotieren und vergleichen sollten?",
+								choices:[
+									{
+										value:"yes",
+										text:"Ja"
+									},
+									{
+										value:"no",
+										text:"Nein"
+									}									
+								]
+							},
+							{
+								name: "experienceChronic",
+								visibleIf:"{Experience} = 'yes'",
+								enableIf:"{Experience} = 'yes'",
+								type: "radiogroup",
+								title: "Haben Sie innerhalb des letzten Jahres an einem anderen Experiment/Test teilgenommen, bei dem Sie ähnliche abstrakte Objekte im Kopf rotieren und vergleichen sollten?",
+								choices:[
+									{
+										value:"yes",
+										text:"Ja, innerhalb des letzten Jahres."
+									},
+									{
+										value:"no",
+										text:"Nein, es ist schon länger als ein Jahr her."
+									}									
+								]
+							},
+							{
+								name: "experienceAcute",
+								visibleIf:"{Experience} = 'yes'",
+								enableIf:"{Experience} = 'yes'",
+								type: "radiogroup",
+								title: "Haben Sie bereits an mehr als drei Experimenten/Tests teilgenommen, bei dem Sie ähnliche abstrakte Objekte im Kopf rotieren und vergleichen sollten?",
+								choices:[
+									{
+										value:"yes",
+										text:"Ja, mehr als drei solche Experimente/Tests."
+									},
+									{
+										value:"no",
+										text:"Nein, drei oder weniger solche Experimente/Tests."
+									}									
+								]
+							},
+							{
+								name: "sex",
+								type: "radiogroup",
+								title: "Wie ist Ihr Geschlecht?",
+								choices: [
+									{
+										value: "male",
+										text: "Männlich"
+									},
+									{
+										value: "female",
+										text: "Weiblich"
+									},
+									{
+										value: "divers",
+										text: "Divers"
+									}
+								]
+							},
+							{
+								name: "age",
+								type: "text",
+								title: "Wie alt sind Sie?",
+								maxLength:3,
+								placeHolder:"...Jahre",
+								validators: [
+									{
+										type: "numeric",
+										text: "Bitte geben Sie ihr Alter als Zahl an",
+										minValue: 0,
+										maxValue: 150
+									}
+								]
+							},
+							{
+								name: "stem",
+								type: "radiogroup",
+								title: "Studieren oder arbeiten Sie hauptsächlich im MINT-Bereich (Mathematik, Informatik, Naturwissenschaft, Technik, inklusive Ingenieurswissenschaften) oder haben Sie ein solches Fach als Hauptfach studiert oder in diesem Bereich hauptsächlich gearbeitet?",
+								choices: [
+									{
+										value: "yes",
+										text: "Ja, ich studiere/arbeite im MINT-Bereich oder habe in diesem Bereich studiert/gearbeitet"
+									},
+									{
+										value: "no",
+										text: "Nein, ich studiere/arbeite nicht in diesem Bereich und habe nicht in diesem Bereich studiert/gearbeitet"
+									}
+								]
+							},
+							{
+								name: "education",
+								type: "radiogroup",
+								title: "Was ist Ihr höchster Bildungsabschluss?",
+								choices: [
+									{
+										value: "Kein Schulabschluss",
+										text: "Kein Schulabschluss"
+									},
+									{
+										value: "Hauptschulabschluss",
+										text: "Hauptschulabschluss"
+									},
+									{
+										value: "Mittlere Reife",
+										text: "Mittlere Reife"
+									},
+									{
+										value: "Abitur",
+										text: "Abitur"
+									},
+									{
+										value: "Bachelor",
+										text: "Bachelor"
+									},
+									{
+										value: "Master/Diplom",
+										text: "Master/Diplom"
+									},
+									{
+										value: "Promotion",
+										text: "Promotion"
+									}
+								]
+							},
+							{
+								type: "checkbox",
+								name: "skipped1",
+								visible: false,
+								visibleIf: "{experience} empty or ({experienceChronic} empty and {experience} = 'yes') or ({experienceAcute} empty and {experience} = 'yes') or {sex} empty or {age} empty or {stem} empty or {education} empty",
+								title: "Sie haben eine oder mehrere Fragen nicht beantwortet. Sind Sie sicher, dass Sie diese unbeantwortet lassen möchten?",
+								description: "Sie können gerne nochmals überprüfen, ob Sie nicht aus Versehen etwas unausgefüllt gelassen haben. Wenn Sie so mit Ihren Antworten zufrieden sind, bestätigen Sie das bitte kurz.",
+								isRequired: true,
+								choices: [
+									{
+										value: "item1",
+										text: "Ja, ich bin mir sicher."
+									}
+								]
+							}
+						]
+					}
+                ]
+            });
+
+            survey.onComplete.add(function (result) {
+                $("#demographics").hide(); // Hides the 'Thank you for completing ...' message
+				let surveyLog = JSON.stringify(result.data).substring(1);
+				surveyLog = "{\"workerId\":"+jatos.workerId+",\"qualityFail\":"+jatos.studySessionData.outlier+","+surveyLog;
+				//outlier and screenout detection
+				//outliers from OSWeb
+				if (jatos.studySessionData.outlier==1) {
+					//link for qualityFail
+					jatos.submitResultData(surveyLog,jatos.endStudyAndRedirect("https://mingle.respondi.com/s/1621225/ospe.php3?c_0002=3&return_tic=" + jatos.urlQueryParameters.tic));
+				} else { //screenout by stem and experience
+					let stem=result.data.stem;
+					let expAcute=result.data.experienceAcute;
+					let expChronic=result.data.experienceChronic;
+					if (stem=="yes" || stem=="" || expAcute=="yes" || expChronic=="yes") {
+						//link for screenouts
+						jatos.submitResultData(surveyLog,jatos.endStudyAndRedirect("https://mingle.respondi.com/s/1621225/ospe.php3?c_0002=0&return_tic=" + jatos.urlQueryParameters.tic));
+					} else {
+						//add 1 to complete data for batch
+						jatos.batchSession.set("completeWorkers",jatos.batchSession.get("completeWorkers")+1);
+						//link for complete
+						jatos.submitResultData(surveyLog,jatos.endStudyAndRedirect("https://mingle.respondi.com/s/1621225/ospe.php3?c_0002=1&return_tic=" + jatos.urlQueryParameters.tic));
+					}
+				}
+            });
+
+            $("#demographics").Survey({
+                model: survey
+            });
+
+        });
+    </script>
+</body>
+
+</html>

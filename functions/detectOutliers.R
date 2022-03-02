@@ -21,7 +21,7 @@ library(plyr)
 markOutliers=function(dataset,verbose){
   #averages for each participant and condition
   datasetByIDandBlock=ddply(dataset,
-                            .(ID,block,Experience,sex),
+                            .(ID,block,experience,sex),
                             summarize,
                             time=min(sum(reactionTime*2/nStimuli,na.rm=T)/180000,1),
                             hits=sum((type=="hit")),
@@ -32,7 +32,7 @@ markOutliers=function(dataset,verbose){
                             firstAnswerSelected=sum(firstAnswerSelected,na.rm=T)/24)
   #overall averages for each participant
   datasetByID=ddply(datasetByIDandBlock,
-                    .(ID,Experience,sex),
+                    .(ID,experience,sex),
                     summarize,
                     timeAvg=sum(time)/6,
                     hitsAvg=sum(hits)/6,

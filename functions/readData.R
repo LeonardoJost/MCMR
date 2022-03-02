@@ -31,6 +31,8 @@ getQuestionnaireData=function(software,verbose,folder){
     
   }else if (software=="OpenSesame"){
     questionnaireData=getQuestionnaireDataOpenSesame(verbose,folder, preText="", c("questionaire","questionnaire"),ending="csv")
+  }else if (software=="jQuery"){
+    questionnaireData=getQuestionnaireDataJQuery(verbose,folder, preText="",ending="csv")
   }
   if (verbose>1) {
     print(paste("Questionnaire data from",nrow(questionnaireData),"participants was read."))
@@ -128,9 +130,11 @@ modifyMRData=function(verbose,MRData) {
   library(plyr)
   missingAnswers=ddply(MRData,.(ID,block,nStimuli,typeOfAlternatives),
                        imputeMissingAnswers)
-  missingAnswers$type="miss"
-  #combine datasets
-  MRData=rbind.fill(MRData,missingAnswers)
+  if(nrow(missingAnswers)>0){
+    missingAnswers$type="miss"
+    #combine datasets
+    MRData=rbind.fill(MRData,missingAnswers)
+  }
   #scale trial numbers to 0..1
   trialNumbers=ddply(MRData,.(ID,block),summarize,
                      minItem=min(itemNumber),
@@ -227,9 +231,40 @@ getDataOSWeb=function(verbose, folder, preText="", part="main",ending="csv") {
   }
   #change names
   dat$block=dat$aaBlock
-  dat$ID=dat$aaID
+  dat$ID=dat$workerId #aaId for old version
   dat$aaBlock=NULL
-  dat$aaID=NULL
+  dat$workerId=NULL
+  return(dat)
+}
+
+#modified 
+getQuestionnaireDataJQuery=function(verbose, folder, preText="",ending="csv") {
+  #get files in folger (Reaction Time Data)
+  fileNames=getFileNames(folder,preText,ending)
+  if (verbose>2) {
+    print("list of files:")
+    print(fileNames)
+  }
+  #initialize empty dataframe
+  dat=data.frame()
+  #loop through all files
+  for (fileIndex in 1:length(fileNames)) {
+    fileName=fileNames[fileIndex]
+    #read data in file as table
+    rawData=read.csv(paste(folder,fileName,sep=""),header=TRUE,fill=TRUE, sep=",")
+    #choose only specified block
+    dataset=rawData[rawData$aaBlock=="",]
+    if (verbose>3) {
+      print(paste("read", nrow(dataset), "values from file:",fileName,"\n"))
+    }
+    #add to dataset
+    dat=rbind(dat,dataset)
+  }
+  #change names
+  dat$block="questionnaire"
+  dat$ID=dat$workerId #aaId for old version
+  dat$aaBlock=NULL
+  dat$workerId=NULL
   return(dat)
 }
 

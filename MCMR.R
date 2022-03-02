@@ -27,31 +27,30 @@ dir.create("figs/MR")
 ##options, parameters
 options(digits=6)
 software=("OSWeb") #OSWeb or OpenSesame (classic)
+softwareQuestionnaire=("jQuery") #jaquery, OSWeb, or OpenSesame (classic)
 #set data folder
-folder="data\\"
+folder="logfiles\\"
 verbose=3 #detail of output
 questionnaireOutFile="output\\questionnaire" #.csv added at end, leave empty if no output desired
 outlierFactor=3 #factor of sd to define outliers in MR
-block=c("main1","main2","main3","main4","main5","main6")#name of interesting block of data
-questionnaireDataCols=c("ID","Gender","STEM","Experience") #which questionnaire columns shall be kept for statistical analysis
+block=c("main1","main2","main3","main4")#name of interesting block of data
+questionnaireDataCols=c("ID","sex","experience","experienceAcute","experienceChronic") #which questionnaire columns shall be kept for statistical analysis
 
 ##read and write data
 #read data
-questionnaireData=getQuestionnaireData(software,verbose,folder)
+questionnaireData=getQuestionnaireData(softwareQuestionnaire,verbose,folder)
 MRData=getMRData(software,verbose,folder,block)
 #modify/clean data 
-questionnaireData=modifyQuestionnaireData(questionnaireData,c("Gender"),c(),c())
 MRData=modifyMRData(verbose,MRData)
+
 
 #calculate means from questionnaire (and save to csv)
 calculateMeansQuestionnaire(verbose,questionnaireData,questionnaireOutFile,"")
 #remove not analyzed questionnaire data to protect participant identity
 questionnaireData=subset(questionnaireData,select=questionnaireDataCols)
-questionnaireData$STEM=ifelse(grepl("MINT",questionnaireData$STEM),"STEM",
-                              ifelse(grepl("anderes",questionnaireData$STEM),"nonSTEM","none"))
-#rename gender to sex
-questionnaireData$sex=questionnaireData$Gender
-questionnaireData$Gender=NULL
+#merge rows of questionnaireData (replace empty values)
+questionnaireData2=data.frame(do.call(rbind, lapply(split(questionnaireData, questionnaireData$ID), function(a) sapply(a, function(x) x[!(x=="")][1]))))
+
 #unify data
 dataset=merge(MRData,questionnaireData,by="ID")
 #mark outliers
@@ -72,10 +71,6 @@ dataset$ExperienceContrasts=sapply(as.factor(dataset$Experience),function(i) con
 STEMContrasts=sapply(as.factor(dataset$STEM),function(i) contr.sum(3)[i,])
 dataset$STEMContrasts1=STEMContrasts[1,]
 dataset$STEMContrasts2=STEMContrasts[2,]
-
-#rename entries to english
-dataset$sex=ifelse(dataset$sex=="m","male","female")
-dataset$Experience=ifelse(dataset$Experience=="Ja","yes","no")
 
 
 #save full dataset to csv
