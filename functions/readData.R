@@ -261,7 +261,7 @@ getQuestionnaireDataJQuery=function(verbose, folder, preText="",ending="csv") {
     dat=rbind(dat,dataset)
   }
   #change names
-  dat$block="questionnaire"
+  #dat$block="questionnaire"
   dat$ID=dat$workerId #aaId for old version
   dat$aaBlock=NULL
   dat$workerId=NULL

@@ -56,7 +56,7 @@
 							elements: [{
 								type: "html",
 								name: "preInfo",
-								html: "Vielen Dank für Ihre Bereitschaft zur Teilnahme an dem Experiment!<br><br>Hier sind noch einige Vorabinformationen zur Durchführung:<br>Bitte bearbeiten Sie das Experiment an einem PC oder Laptop.<br>Nehmen Sie sich ca. 15 Minuten Zeit und sorgen Sie für eine möglichst ungestörte Atmosphäre.<br>Lesen Sie die Instruktionen aufmerksam und sorgfältig.<br>Bitte bearbeiten Sie das Experiment alleine.<br><br>Wenn Sie jetzt keine Zeit haben oder das Experiment nicht bearbeiten möchten, können Sie gerne auch ein andermal teilnehmen.<br><br>Falls Fragen oder Probleme auftreten können Sie sich gerne per E-Mail an leonardo.jost@ur.de wenden."
+								html: "Vielen Dank für Ihre Bereitschaft zur Teilnahme an dem Experiment!<br><br>Hier sind noch einige Vorabinformationen zur Durchführung:<br>Bitte bearbeiten Sie das Experiment an einem PC oder Laptop.<br>Nehmen Sie sich ca. 15 Minuten Zeit und sorgen Sie für eine möglichst ungestörte Atmosphäre.<br>Lesen Sie die Instruktionen aufmerksam und sorgfältig.<br>Bitte bearbeiten Sie das Experiment alleine.<br>Verwenden Sie bitte <b>nicht</b> die Navigationselemente des Browsers. Andernfalls kann es zum Abbruch des Experiments kommen.<br><br>Wenn Sie jetzt keine Zeit haben oder das Experiment nicht bearbeiten möchten, können Sie gerne auch ein andermal teilnehmen.<br><br>Falls Fragen oder Probleme auftreten können Sie sich gerne per E-Mail an leonardo.jost@ur.de wenden."
 							}]
 						},
 						{
@@ -65,7 +65,7 @@
 							elements: [{
 								type: "html",
 								name: "info",
-								html: "Liebe Studienteilnehmerin, lieber Studienteilnehmer,<br><br>das Experiment „Unterschiedliche Arten von mentalen Rotationsaufgaben“ wurde mit dem Ziel entworfen, Erkenntnis über Zusammenhänge<br>zwischen unterschiedlichen Aufgabentypen und mentaler Rotationsleistung zu gewinnen. Dazu sollen Sie in dem Experiment nach einer kurzen<br>Übungseinheit verschiedene mentale Rotationsaufgaben lösen. Bei diesen mentalen Rotationsaufgaben handelt es sich um kognitive Aufgaben,<br>bei denen Sie abstrakte Figuren im Kopf rotieren und vergleichen sollen. Vor den Aufgaben werden wir noch einigen demographische Daten von<br>Ihnen erheben. Das gesamte Experiment dauert ca. 15 Minuten.<br><br>Die im Folgenden erhobenen Daten werden ausschließlich für wissenschaftliche Zwecke verwendet. Es werden keine weiteren identifizierenden<br>Merkmale zu Ihrer Teilnahme gespeichert. Die Teilnahme am Experiment wird getrennt von den Daten an respondi übermittelt.<br>Dadurch ist keine Rückentschlüsselung Ihrer Daten mehr möglich. Die Ergebnisse dieser Studie werden ausschließlich anonymisiert veröffentlicht.<br><br>Es würde uns sehr freuen, wenn Sie an der Studie teilnehmen würden. Selbstverständlich kann das Experiment jederzeit abgebrochen und die bis<br>dahin erhobenen Daten gelöscht werden. Dadurch entstünden Ihnen keinerlei Nachteile."
+								html: "Liebe Studienteilnehmerin, lieber Studienteilnehmer,<br><br>das Experiment „Unterschiedliche Arten von mentalen Rotationsaufgaben“ wurde mit dem Ziel entworfen, Erkenntnis über Zusammenhänge<br>zwischen unterschiedlichen Aufgabentypen und mentaler Rotationsleistung zu gewinnen. Dazu sollen Sie in dem Experiment nach einer kurzen<br>Übungseinheit verschiedene mentale Rotationsaufgaben lösen. Bei diesen mentalen Rotationsaufgaben handelt es sich um kognitive Aufgaben,<br>bei denen Sie abstrakte Figuren im Kopf rotieren und vergleichen sollen. Vor den Aufgaben werden wir noch einige demographische Daten von<br>Ihnen erheben. Das gesamte Experiment dauert ca. 15 Minuten.<br><br>Die im Folgenden erhobenen Daten werden ausschließlich für wissenschaftliche Zwecke verwendet. Es werden keine weiteren identifizierenden<br>Merkmale zu Ihrer Teilnahme gespeichert. Die Teilnahme am Experiment wird getrennt von den Daten an respondi übermittelt.<br>Dadurch ist keine Rückentschlüsselung Ihrer Daten mehr möglich. Die Ergebnisse dieser Studie werden ausschließlich anonymisiert veröffentlicht.<br><br>Es würde uns sehr freuen, wenn Sie an der Studie teilnehmen würden. Selbstverständlich kann das Experiment jederzeit abgebrochen und die bis<br>dahin erhobenen Daten gelöscht werden. Dadurch entstünden Ihnen keinerlei Nachteile."
 							}]
 						},
 						{
@@ -345,7 +345,7 @@
 				survey.onComplete.add(function (result) {
 					$("#consent").hide(); // Hides the 'Thank you for completing ...' message
 					let surveyLog = JSON.stringify(result.data).substring(1);
-					surveyLog = "{\"workerId\":"+jatos.workerId+",\"tic\":"+jatos.urlQueryParameters.tic+","+surveyLog;
+					surveyLog = "{\"workerId\":"+jatos.workerId+",\"tic\":\""+jatos.urlQueryParameters.tic+"\","+surveyLog;
 					//screenout by stem in either study or work
 					let study=result.data.study;
 					let work=result.data.work;

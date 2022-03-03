@@ -34,23 +34,22 @@ markOutliers=function(dataset,verbose){
   datasetByID=ddply(datasetByIDandBlock,
                     .(ID,experience,sex),
                     summarize,
-                    timeAvg=sum(time)/6,
-                    hitsAvg=sum(hits)/6,
-                    incorrectsAvg=sum(incorrects)/6,
-                    attemptsAvg=sum(attempts)/6,
+                    timeAvg=sum(time)/4,
+                    hitsAvg=sum(hits)/4,
+                    incorrectsAvg=sum(incorrects)/4,
+                    attemptsAvg=sum(attempts)/4,
                     accAttemptsAvg=hitsAvg/(hitsAvg+incorrectsAvg),
                     accAvg=sum(hitsAvg/24),
                     firstAnswerSelectedAvg=mean(abs(firstAnswerSelected-1/2)))
   #exclude those with attempted accuracy at or below chance
   possibleOutliers1=datasetByID[which(datasetByID$accAttemptsAvg<=1/2),]
   #preferred speed too much over accuracy (sum of accuracy and used time <1)
-  possibleOutliers2=datasetByID[which(datasetByID$accAvg+datasetByID$timeAvg<1),]
+  possibleOutliers2=datasetByID[which(datasetByID$accAttemptsAvg+datasetByID$timeAvg<1),]
   #chose the first answer too often or too rarely indicating answer patterns
   possibleOutliers3=datasetByID[which(datasetByID$accAttemptsAvg<2/3 &
                                         datasetByID$firstAnswerSelectedAvg>0.4),]
   #too few attempts
   possibleOutliers4=datasetByID[which(datasetByID$attemptsAvg<=0.5),]
-  #is empty
   #combine
   outliers=unique(rbind(possibleOutliers1,possibleOutliers2,possibleOutliers3,possibleOutliers4))
   #console output

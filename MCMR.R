@@ -34,7 +34,7 @@ verbose=3 #detail of output
 questionnaireOutFile="output\\questionnaire" #.csv added at end, leave empty if no output desired
 outlierFactor=3 #factor of sd to define outliers in MR
 block=c("main1","main2","main3","main4")#name of interesting block of data
-questionnaireDataCols=c("ID","sex","experience","experienceAcute","experienceChronic") #which questionnaire columns shall be kept for statistical analysis
+questionnaireDataCols=c("ID","age","tic","education","study","work","sex","experience","experienceAcute","experienceChronic") #which questionnaire columns shall be kept for analysis
 
 ##read and write data
 #read data
@@ -42,14 +42,14 @@ questionnaireData=getQuestionnaireData(softwareQuestionnaire,verbose,folder)
 MRData=getMRData(software,verbose,folder,block)
 #modify/clean data 
 MRData=modifyMRData(verbose,MRData)
+#merge rows of questionnaireData (replace empty values)
+questionnaireData=data.frame(do.call(rbind, lapply(split(questionnaireData, questionnaireData$ID), function(a) sapply(a, function(x) x[!(x=="")][1]))))
 
 
 #calculate means from questionnaire (and save to csv)
 calculateMeansQuestionnaire(verbose,questionnaireData,questionnaireOutFile,"")
 #remove not analyzed questionnaire data to protect participant identity
 questionnaireData=subset(questionnaireData,select=questionnaireDataCols)
-#merge rows of questionnaireData (replace empty values)
-questionnaireData2=data.frame(do.call(rbind, lapply(split(questionnaireData, questionnaireData$ID), function(a) sapply(a, function(x) x[!(x=="")][1]))))
 
 #unify data
 dataset=merge(MRData,questionnaireData,by="ID")
