@@ -49,7 +49,7 @@ markOutliers=function(dataset,verbose){
   possibleOutliers3=datasetByID[which(datasetByID$accAttemptsAvg<2/3 &
                                         datasetByID$firstAnswerSelectedAvg>0.4),]
   #too few attempts
-  possibleOutliers4=datasetByID[which(datasetByID$attemptsAvg<=0.5),]
+  possibleOutliers4=datasetByID[which(datasetByID$attemptsAvg<=0.5 & (datasetByID$timeAvg<0.5 | datasetByID$timeAvg+datasetByID$attemptsAvg<1)),]
   #combine
   outliers=unique(rbind(possibleOutliers1,possibleOutliers2,possibleOutliers3,possibleOutliers4))
   #console output
@@ -70,11 +70,12 @@ markOutliers=function(dataset,verbose){
   datasetByID$outlier1=ifelse(datasetByID$ID %in% possibleOutliers1$ID,"1 ","")
   datasetByID$outlier2=ifelse(datasetByID$ID %in% possibleOutliers2$ID,"2 ","")
   datasetByID$outlier3=ifelse(datasetByID$ID %in% possibleOutliers3$ID,"3 ","")
-  datasetByID$outlierType=paste(datasetByID$outlier1,datasetByID$outlier2,datasetByID$outlier3,sep="")
-  datasetByID$outlierType=ifelse(datasetByID$outlierType=="","no outlier",paste("type",datasetByID$outlierType))
-  datasetByID$outlierType=factor(datasetByID$outlierType,levels=c("no outlier","type 1 ","type 2 ","type 1 2 ","type 1 2 3 "))
+  datasetByID$outlier4=ifelse(datasetByID$ID %in% possibleOutliers4$ID,"4 ","")
+  datasetByID$outlierType=paste(datasetByID$outlier1,datasetByID$outlier2,datasetByID$outlier3,datasetByID$outlier4,sep="")
+  datasetByID$outlierType=as.factor(ifelse(datasetByID$outlierType=="","no outlier",paste("type",datasetByID$outlierType)))
+  #datasetByID$outlierType=factor(datasetByID$outlierType,levels=c("no outlier","type 1 ","type 2 ","type 1 2 ","type 1 2 3 "))
   ggplot(datasetByID, aes(x=timeAvg,y=accAttemptsAvg,color=outlierType,shape=outlierType))+
-    geom_point() +
+    geom_point() + scale_shape_manual(values=1:nlevels(datasetByID$outlierType)) +
     labs(x="Proportion of available time used",y="Proportion of correct attempted trials",color="type of outliers",shape="type of outliers") + 
     theme_classic() + theme(legend.position = "right")
   ggsave("figs/MR/SpeedAccTradeoffOutliers.png")

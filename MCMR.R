@@ -34,7 +34,7 @@ verbose=3 #detail of output
 questionnaireOutFile="output\\questionnaire" #.csv added at end, leave empty if no output desired
 outlierFactor=3 #factor of sd to define outliers in MR
 block=c("main1","main2","main3","main4")#name of interesting block of data
-questionnaireDataCols=c("ID","age","tic","education","study","work","sex","experience","experienceAcute","experienceChronic") #which questionnaire columns shall be kept for analysis
+questionnaireDataCols=c("ID","age","education","study","work","sex","experience","experienceAcute","experienceChronic") #which questionnaire columns shall be kept for analysis
 
 ##read and write data
 #read data
@@ -43,14 +43,15 @@ MRData=getMRData(software,verbose,folder,block)
 #modify/clean data 
 MRData=modifyMRData(verbose,MRData)
 #merge rows of questionnaireData (replace empty values)
-questionnaireData=data.frame(do.call(rbind, lapply(split(questionnaireData, questionnaireData$ID), function(a) sapply(a, function(x) x[!(x=="")][1]))))
+questionnaireData=data.frame(do.call(rbind, lapply(split(questionnaireData, questionnaireData$ID), function(a) sapply(a, function(x) x[!(x=="" | is.na(x))][1]))))
 
 
 #calculate means from questionnaire (and save to csv)
 calculateMeansQuestionnaire(verbose,questionnaireData,questionnaireOutFile,"")
 #remove not analyzed questionnaire data to protect participant identity
 questionnaireData=subset(questionnaireData,select=questionnaireDataCols)
-
+#remove questionnaire data before merging
+MRData=MRData[,!(colnames(MRData) %in% questionnaireDataCols[2:length(questionnaireDataCols)])]
 #unify data
 dataset=merge(MRData,questionnaireData,by="ID")
 #mark outliers
@@ -62,15 +63,15 @@ dataset$ID=as.factor(dataset$ID)
 levels(dataset$ID)=paste("id",sample.int(length(levels(dataset$ID))),sep="")
 
 #add sum contrasted variables
-dataset$sexContrasts=sapply(as.factor(dataset$sex),function(i) contr.sum(2)[i,])
-dataset$typeContrasts=sapply(as.factor(dataset$typeOfAlternatives),function(i) contr.sum(2)[i,])
-nStimuliContrasts=sapply(as.factor(dataset$nStimuli),function(i) contr.sum(3)[i,])
-dataset$nStimuliContrasts1=nStimuliContrasts[1,]
-dataset$nStimuliContrasts2=nStimuliContrasts[2,]
-dataset$ExperienceContrasts=sapply(as.factor(dataset$Experience),function(i) contr.sum(2)[i,])
-STEMContrasts=sapply(as.factor(dataset$STEM),function(i) contr.sum(3)[i,])
-dataset$STEMContrasts1=STEMContrasts[1,]
-dataset$STEMContrasts2=STEMContrasts[2,]
+# dataset$sexContrasts=sapply(as.factor(dataset$sex),function(i) contr.sum(2)[i,])
+# dataset$typeContrasts=sapply(as.factor(dataset$typeOfAlternatives),function(i) contr.sum(2)[i,])
+# nStimuliContrasts=sapply(as.factor(dataset$nStimuli),function(i) contr.sum(3)[i,])
+# dataset$nStimuliContrasts1=nStimuliContrasts[1,]
+# dataset$nStimuliContrasts2=nStimuliContrasts[2,]
+# dataset$ExperienceContrasts=sapply(as.factor(dataset$Experience),function(i) contr.sum(2)[i,])
+# STEMContrasts=sapply(as.factor(dataset$STEM),function(i) contr.sum(3)[i,])
+# dataset$STEMContrasts1=STEMContrasts[1,]
+# dataset$STEMContrasts2=STEMContrasts[2,]
 
 
 #save full dataset to csv

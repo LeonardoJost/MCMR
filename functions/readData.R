@@ -82,6 +82,9 @@ modifyMRData=function(verbose,MRData) {
   if (verbose>1) {
     print("Transforming mental rotation data ...")
   }
+  #remove IDs which restarted experiment
+  n_occur=data.frame(table(MRData[MRData$block=="main1" & MRData$itemNumber==1,c("ID")]))
+  MRData=MRData[!(MRData$ID %in% n_occur$Var1[which(n_occur$Freq>1)]),]
   #convert array to numbers
   MRData$answers=stringToNumArray(MRData$answers)
   #save first answer for possible answer patterns
