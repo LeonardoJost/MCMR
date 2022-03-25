@@ -89,8 +89,6 @@ modifyMRData=function(verbose,MRData) {
   MRData$answers=stringToNumArray(MRData$answers)
   #save first answer for possible answer patterns
   MRData$firstAnswerSelected=unlist(lapply(MRData$answers, function(x) x[[1]]))
-  #drop trials in which more than nStimuli/2 answers are selected (possible at end of blocks)
-  MRData=MRData[lapply(MRData$answers, function(x) sum(unlist(x)))<=MRData$nStimuli/2,]
   #split arrays into rows
   #commented are unnecessary rows
   MRData=data.frame(angleStimulus=rep(MRData$angle,MRData$nStimuli),
@@ -104,6 +102,7 @@ modifyMRData=function(verbose,MRData) {
                     block=rep(MRData$block,MRData$nStimuli),
                     ID=rep(MRData$ID,MRData$nStimuli),
                     firstAnswerSelected=rep(MRData$firstAnswerSelected,MRData$nStimuli),
+                    attemptedItems=rep(unlist(lapply(MRData$answers, function(x) sum(unlist(x)))),MRData$nStimuli),
                     #arrays to unlist
                     angleAlternative=unlist(stringToNumArray(MRData$anglesArray)),
                     answerCorrect=unlist(stringToNumArray(MRData$correctAnswers)),
@@ -118,6 +117,8 @@ modifyMRData=function(verbose,MRData) {
   MRData$deg=ifelse(MRData$deg>180,360-MRData$deg,MRData$deg)
   #get type as string
   MRData$type=ifelse(MRData$answerCorrect==1,"hit","incorrect")
+  #set trials to "miss" in which more than nStimuli/2 answers are selected (possible at end of blocks) (does not actually happen)
+  MRData$type[which(MRData$attemptedItems>MRData$nStimuli/2)]="miss"
   #modelnumber as string
   MRData$modelNumber=paste("m",stringToNum(MRData$model),sep="")
   #drop unneeded columns
@@ -144,14 +145,15 @@ modifyMRData=function(verbose,MRData) {
                      maxItem=max(itemNumber))
   MRData=merge(MRData,trialNumbers,by=c("ID","block"))
   MRData$trialNumber=(MRData$itemNumber-MRData$minItem)/(MRData$maxItem-MRData$minItem)
+  MRData$trialNumber[which(is.na(MRData$trialNumber))]=0.5 #for blocks with only one unfinished trial 
   MRData$minItem=NULL
   MRData$maxItem=NULL
   MRData$itemNumber=NULL
-  #add overall number of correct answers
-  overallHits=ddply(MRData,
-                    .(ID), summarize,
-                    overallHits=sum((type=="hit")))
-  MRData=merge(MRData,overallHits,by="ID")
+  # #add overall number of correct answers
+  # overallHits=ddply(MRData,
+  #                   .(ID), summarize,
+  #                   overallHits=sum((type=="hit")))
+  # MRData=merge(MRData,overallHits,by="ID")
   return(MRData)
 }
 

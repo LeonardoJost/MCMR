@@ -34,7 +34,7 @@ verbose=3 #detail of output
 questionnaireOutFile="output\\questionnaire" #.csv added at end, leave empty if no output desired
 outlierFactor=3 #factor of sd to define outliers in MR
 block=c("main1","main2","main3","main4")#name of interesting block of data
-questionnaireDataCols=c("ID","age","education","study","work","sex","experience","experienceAcute","experienceChronic") #which questionnaire columns shall be kept for analysis
+questionnaireDataCols=c("ID","sex","experience","experienceAcute","experienceChronic") #which questionnaire columns shall be kept for analysis
 
 ##read and write data
 #read data
@@ -62,17 +62,39 @@ dataset$firstAnswerSelected=NULL
 dataset$ID=as.factor(dataset$ID)
 levels(dataset$ID)=paste("id",sample.int(length(levels(dataset$ID))),sep="")
 
-#add sum contrasted variables
-# dataset$sexContrasts=sapply(as.factor(dataset$sex),function(i) contr.sum(2)[i,])
-# dataset$typeContrasts=sapply(as.factor(dataset$typeOfAlternatives),function(i) contr.sum(2)[i,])
-# nStimuliContrasts=sapply(as.factor(dataset$nStimuli),function(i) contr.sum(3)[i,])
-# dataset$nStimuliContrasts1=nStimuliContrasts[1,]
-# dataset$nStimuliContrasts2=nStimuliContrasts[2,]
-# dataset$ExperienceContrasts=sapply(as.factor(dataset$Experience),function(i) contr.sum(2)[i,])
-# STEMContrasts=sapply(as.factor(dataset$STEM),function(i) contr.sum(3)[i,])
-# dataset$STEMContrasts1=STEMContrasts[1,]
-# dataset$STEMContrasts2=STEMContrasts[2,]
-
 
 #save full dataset to csv
-write.table(dataset,file="output\\dataset.csv",sep=";", row.names = F)
+write.table(dataset,file="output\\datasetFull.csv",sep=";", row.names = F)
+
+#remove outliers and persons with too much experience (dataset for analysis)
+#remove outliers
+datasetNoOutlier=dataset[which(!dataset$outlier),]
+#remove participants with experience
+datasetNoOutlier=datasetNoOutlier[which((datasetNoOutlier$experienceAcute=="no" & datasetNoOutlier$experienceChronic=="no") | datasetNoOutlier$experience=="no"),]
+
+#add sum contrasted variables
+datasetNoOutlier$sexContrasts=sapply(as.factor(datasetNoOutlier$sex),function(i) contr.sum(2)[i,])
+datasetNoOutlier$typeContrasts=sapply(as.factor(datasetNoOutlier$typeOfAlternatives),function(i) contr.sum(2)[i,])
+datasetNoOutlier$nStimuliContrasts=sapply(as.factor(datasetNoOutlier$nStimuli),function(i) contr.sum(2)[i,])
+#save dataset to csv
+write.table(datasetNoOutlier,file="output\\dataset.csv",sep=";", row.names = F)
+
+#create summarized datasets
+library(plyr)
+#create dataset summarized by trials (over multiple items of trials)
+datasetByIDandTrial=ddply(datasetNoOutlier,
+                          .(ID,block,sexContrasts,nStimuliContrasts,typeContrasts,sex,nStimuli,typeOfAlternatives,trialNumber,attemptedItems),
+                          summarize,
+                          hits=sum((type=="hit")),
+                          incorrects=sum((type=="incorrect")))
+#create dataset summarized by blocks
+datasetByIDandBlock=ddply(datasetByIDandTrial,
+                          .(ID,block,sexContrasts,nStimuliContrasts,typeContrasts,sex,nStimuli,typeOfAlternatives),
+                          summarize,
+                          hitSum=sum(hits),
+                          incorrectSum=sum(incorrects),
+                          acc=hitSum/24,
+                          accAttempts=hitSum/(hitSum+incorrectSum),
+                          attempts=sum(attemptedItems,na.rm=T))
+#save dataset to csv
+write.table(datasetByIDandBlock,file="output\\datasetGrouped.csv",sep=";", row.names = F)
