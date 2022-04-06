@@ -152,7 +152,7 @@ show(MixedModels.likelihoodratiotest(fixedEffects3,fixedEffects32))
 show(MixedModels.likelihoodratiotest(fixedEffects3,fixedEffects33))
 #largest p for 32
 fixedEffects4=fixedEffects32
-#nStimuliContrasts*typeContrasts+
+#nStimuliContrasts*typeContrasts
 modelFormula=@formula(acc~nStimuliContrasts+typeContrasts+
               sexContrasts+
               blockNumeric+

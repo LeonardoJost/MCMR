@@ -373,7 +373,7 @@ show(MixedModels.likelihoodratiotest(fixedEffects2,fixedEffects22))
 show(MixedModels.likelihoodratiotest(fixedEffects2,fixedEffects23))
 #lowest lrt for 22 (negative?)
 fixedEffects3=fixedEffects22
-#nStimuliContrasts*typeContrasts+
+#nStimuliContrasts*typeContrasts
 modelFormula=@formula(responseCorrect~typeContrasts+
               sexContrasts*nStimuliContrasts+
               blockNumeric+deg+trialNumber+
@@ -409,3 +409,55 @@ modelFormula=@formula(responseCorrect~typeContrasts+
 #comparison
 show(MixedModels.likelihoodratiotest(fixedEffects4,fixedEffects41))
 show(MixedModels.likelihoodratiotest(fixedEffects4,fixedEffects42))
+#42 n.s.
+fixedEffects5=fixedEffects42
+#typeContrasts
+modelFormula=@formula(responseCorrect~
+              sexContrasts+nStimuliContrasts+
+              blockNumeric+deg+trialNumber+
+              (nStimuliContrasts*typeContrasts+blockNumeric+deg+trialNumber|ID)+
+              (nStimuliContrasts|modelNumber))
+@elapsed fixedEffects51=fit(MixedModel,modelFormula,dataset,Binomial())
+#sexContrasts
+modelFormula=@formula(responseCorrect~typeContrasts+
+              nStimuliContrasts+
+              blockNumeric+deg+trialNumber+
+              (nStimuliContrasts*typeContrasts+blockNumeric+deg+trialNumber|ID)+
+              (nStimuliContrasts|modelNumber))
+@elapsed fixedEffects52=fit(MixedModel,modelFormula,dataset,Binomial())
+#nStimuliContrasts
+modelFormula=@formula(responseCorrect~typeContrasts+
+              sexContrasts+
+              blockNumeric+deg+trialNumber+
+              (nStimuliContrasts*typeContrasts+blockNumeric+deg+trialNumber|ID)+
+              (nStimuliContrasts|modelNumber))
+@elapsed fixedEffects53=fit(MixedModel,modelFormula,dataset,Binomial())
+#blockNumeric
+modelFormula=@formula(responseCorrect~typeContrasts+
+              sexContrasts+nStimuliContrasts+
+              deg+trialNumber+
+              (nStimuliContrasts*typeContrasts+blockNumeric+deg+trialNumber|ID)+
+              (nStimuliContrasts|modelNumber))
+@elapsed fixedEffects54=fit(MixedModel,modelFormula,dataset,Binomial())
+#deg
+modelFormula=@formula(responseCorrect~typeContrasts+
+              sexContrasts+nStimuliContrasts+
+              blockNumeric+trialNumber+
+              (nStimuliContrasts*typeContrasts+blockNumeric+deg+trialNumber|ID)+
+              (nStimuliContrasts|modelNumber))
+@elapsed fixedEffects55=fit(MixedModel,modelFormula,dataset,Binomial())
+#trialNumber
+modelFormula=@formula(responseCorrect~typeContrasts+
+              sexContrasts+nStimuliContrasts+
+              blockNumeric+deg+
+              (nStimuliContrasts*typeContrasts+blockNumeric+deg+trialNumber|ID)+
+              (nStimuliContrasts|modelNumber))
+@elapsed fixedEffects56=fit(MixedModel,modelFormula,dataset,Binomial())
+#comparison
+show(MixedModels.likelihoodratiotest(fixedEffects5,fixedEffects51))
+show(MixedModels.likelihoodratiotest(fixedEffects5,fixedEffects52))
+show(MixedModels.likelihoodratiotest(fixedEffects5,fixedEffects53))
+show(MixedModels.likelihoodratiotest(fixedEffects5,fixedEffects54))
+show(MixedModels.likelihoodratiotest(fixedEffects5,fixedEffects55))
+show(MixedModels.likelihoodratiotest(fixedEffects5,fixedEffects56))
+#all significant

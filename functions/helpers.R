@@ -83,6 +83,9 @@ meanMode=function(vec,narm=TRUE,digitsFormat=4) {
   if(is.factor(vec)){
     vec=levels(vec)[vec]
   }
+  if(sum(is.na(vec))==length(vec)){
+    return("")
+  }
   if(is.numeric(vec))
     return(meanSd(vec,narm,digitsFormat))
   else

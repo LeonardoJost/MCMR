@@ -44,14 +44,15 @@ MRData=getMRData(software,verbose,folder,block)
 MRData=modifyMRData(verbose,MRData)
 #merge rows of questionnaireData (replace empty values)
 questionnaireData=data.frame(do.call(rbind, lapply(split(questionnaireData, questionnaireData$ID), function(a) sapply(a, function(x) x[!(x=="" | is.na(x))][1]))))
-
+#remove participants who did not finish
+questionnaireData=questionnaireData[which(!is.na(questionnaireData$experience)),]
 
 #calculate means from questionnaire (and save to csv)
-calculateMeansQuestionnaire(verbose,questionnaireData,questionnaireOutFile,"")
+calculateMeansQuestionnaire(verbose,questionnaireData,questionnaireOutFile)
 #remove not analyzed questionnaire data to protect participant identity
 questionnaireData=subset(questionnaireData,select=questionnaireDataCols)
 #remove questionnaire data before merging
-MRData=MRData[,!(colnames(MRData) %in% questionnaireDataCols[2:length(questionnaireDataCols)])]
+#MRData=MRData[,!(colnames(MRData) %in% questionnaireDataCols[2:length(questionnaireDataCols)])]
 #unify data
 dataset=merge(MRData,questionnaireData,by="ID")
 #mark outliers
@@ -76,6 +77,7 @@ datasetNoOutlier=datasetNoOutlier[which((datasetNoOutlier$experienceAcute=="no" 
 datasetNoOutlier$sexContrasts=sapply(as.factor(datasetNoOutlier$sex),function(i) contr.sum(2)[i,])
 datasetNoOutlier$typeContrasts=sapply(as.factor(datasetNoOutlier$typeOfAlternatives),function(i) contr.sum(2)[i,])
 datasetNoOutlier$nStimuliContrasts=sapply(as.factor(datasetNoOutlier$nStimuli),function(i) contr.sum(2)[i,])
+
 #save dataset to csv
 write.table(datasetNoOutlier,file="output\\dataset.csv",sep=";", row.names = F)
 
