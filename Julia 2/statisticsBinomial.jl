@@ -63,7 +63,7 @@ modelFormula=@formula(responseCorrect~sexContrasts*nStimuliContrasts*typeContras
               zerocorr(nStimuliContrasts*typeContrasts+blockNumeric+deg+trialNumber|ID)+
               (sexContrasts+nStimuliContrasts+typeContrasts+blockNumeric+deg+trialNumber|modelNumber))
 @elapsed slopesModel12=fit(MixedModel,modelFormula,dataset,Binomial())
-#remove random correlation by id
+#remove random correlation by modelNumber
 modelFormula=@formula(responseCorrect~sexContrasts*nStimuliContrasts*typeContrasts+blockNumeric+deg+trialNumber+
               (nStimuliContrasts*typeContrasts+blockNumeric+deg+trialNumber|ID)+
               zerocorr(sexContrasts+nStimuliContrasts+typeContrasts+blockNumeric+deg+trialNumber|modelNumber))

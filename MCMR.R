@@ -27,14 +27,15 @@ dir.create("figs/MR")
 ##options, parameters
 options(digits=6)
 software=("OSWeb") #OSWeb or OpenSesame (classic)
-softwareQuestionnaire=("jQuery") #jaquery, OSWeb, or OpenSesame (classic)
+softwareQuestionnaire=("jQuery") #jquery, OSWeb, or OpenSesame (classic)
 #set data folder
 folder="logfiles\\"
-verbose=3 #detail of output
+verbose=2 #detail of output
 questionnaireOutFile="output\\questionnaire" #.csv added at end, leave empty if no output desired
-outlierFactor=3 #factor of sd to define outliers in MR
+#outlierFactor=3 #factor of sd to define outliers in MR
 block=c("main1","main2","main3","main4")#name of interesting block of data
-questionnaireDataCols=c("ID","sex","experience","experienceAcute","experienceChronic") #which questionnaire columns shall be kept for analysis
+questionnaireDataCols=c("ID","age","education","study","work","sex","experience","experienceAcute","experienceChronic") #which questionnaire columns shall be kept for merging/summarizing
+questionnaireDataColsForAnalysis=c("ID","sex","experience","experienceAcute","experienceChronic") #which questionnaire columns shall be kept for analysis
 
 ##read and write data
 #read data
@@ -46,23 +47,33 @@ MRData=modifyMRData(verbose,MRData)
 questionnaireData=data.frame(do.call(rbind, lapply(split(questionnaireData, questionnaireData$ID), function(a) sapply(a, function(x) x[!(x=="" | is.na(x))][1]))))
 #remove participants who did not finish
 questionnaireData=questionnaireData[which(!is.na(questionnaireData$experience)),]
+#trasnform age to numeric
+questionnaireData$age=toNumeric(questionnaireData$age)
 
+#remove not at least descriptively analyzed questionnaire data
+questionnaireData=subset(questionnaireData,select=questionnaireDataCols)
 #calculate means from questionnaire (and save to csv)
 calculateMeansQuestionnaire(verbose,questionnaireData,questionnaireOutFile)
-#remove not analyzed questionnaire data to protect participant identity
-questionnaireData=subset(questionnaireData,select=questionnaireDataCols)
-#remove questionnaire data before merging
-#MRData=MRData[,!(colnames(MRData) %in% questionnaireDataCols[2:length(questionnaireDataCols)])]
 #unify data
 dataset=merge(MRData,questionnaireData,by="ID")
 #mark outliers
 dataset=markOutliers(dataset,verbose)
 #remove unnecessary column
 dataset$firstAnswerSelected=NULL
+#calculate means from questionnaire for outliers separately
+questionnaireDataOutliers=unique(dataset[which(dataset$outlier),questionnaireDataCols])
+questionnaireDataNoOutliers=unique(dataset[which(!dataset$outlier &
+                                                   ((dataset$experienceAcute=="no" & dataset$experienceChronic=="no") | dataset$experience=="no")),questionnaireDataCols])
+#calculate means from questionnaire for outliers and nonOutliers separately (and save to csv)
+calculateMeansQuestionnaire(verbose,questionnaireDataOutliers,paste(questionnaireOutFile,"Outliers",sep=""))
+calculateMeansQuestionnaire(verbose,questionnaireDataNoOutliers,paste(questionnaireOutFile,"NoOutliers",sep=""))
+#remove not analyzed questionnaire data to protect participant identity
+dataset[names(dataset)[names(dataset) %in% setdiff(questionnaireDataCols,questionnaireDataColsForAnalysis)]]=NULL
 #anonymise IDs to protect participant identity
 dataset$ID=as.factor(dataset$ID)
 levels(dataset$ID)=paste("id",sample.int(length(levels(dataset$ID))),sep="")
-
+#remove divers participants (because there is only one and outlier) for anonymisation
+dataset=dataset[which(dataset$sex!="divers"),]
 
 #save full dataset to csv
 write.table(dataset,file="output\\datasetFull.csv",sep=";", row.names = F)
