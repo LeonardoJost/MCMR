@@ -1,4 +1,4 @@
-### test selection of random slopes
+### test selection of random slopes and significance of fixed effects using normal distribution
 #     Copyright (C) 2022  Leonardo Jost
 #
 # This program is free software: you can redistribute it and/or modify
@@ -201,4 +201,52 @@ show(MixedModels.likelihoodratiotest(fixedEffects5,fixedEffects51))
 show(MixedModels.likelihoodratiotest(fixedEffects5,fixedEffects52))
 show(MixedModels.likelihoodratiotest(fixedEffects5,fixedEffects53))
 show(MixedModels.likelihoodratiotest(fixedEffects5,fixedEffects54))
-#all significant
+#largest p for 53
+fixedEffects6=fixedEffects53
+#nStimuliContrasts
+modelFormula=@formula(acc~typeContrasts+
+              blockNumeric+
+              (nStimuliContrasts*typeContrasts+blockNumeric|ID))
+@elapsed fixedEffects61=fit(LinearMixedModel,modelFormula, dataset,REML=false)
+#typeContrasts
+modelFormula=@formula(acc~nStimuliContrasts+
+              blockNumeric+
+              (nStimuliContrasts*typeContrasts+blockNumeric|ID))
+@elapsed fixedEffects62=fit(LinearMixedModel,modelFormula, dataset,REML=false)
+#blockNumeric
+modelFormula=@formula(acc~nStimuliContrasts+typeContrasts+
+              (nStimuliContrasts*typeContrasts+blockNumeric|ID))
+@elapsed fixedEffects63=fit(LinearMixedModel,modelFormula, dataset,REML=false)
+#comparison
+show(MixedModels.likelihoodratiotest(fixedEffects6,fixedEffects61))
+show(MixedModels.likelihoodratiotest(fixedEffects6,fixedEffects62))
+show(MixedModels.likelihoodratiotest(fixedEffects6,fixedEffects63))
+
+#test n.s. effects
+#sex
+show(MixedModels.likelihoodratiotest(fixedEffects5,fixedEffects6))
+#n*sex
+modelFormula=@formula(acc~nStimuliContrasts+typeContrasts+
+              blockNumeric+nStimuliContrasts&sexContrasts+
+              (nStimuliContrasts*typeContrasts+blockNumeric|ID))
+@elapsed fixedEffects64=fit(LinearMixedModel,modelFormula, dataset,REML=false)
+#n*type
+modelFormula=@formula(acc~nStimuliContrasts+typeContrasts+
+              blockNumeric+nStimuliContrasts&typeContrasts+
+              (nStimuliContrasts*typeContrasts+blockNumeric|ID))
+@elapsed fixedEffects65=fit(LinearMixedModel,modelFormula, dataset,REML=false)
+#sex*type
+modelFormula=@formula(acc~nStimuliContrasts+typeContrasts+
+              blockNumeric+typeContrasts&sexContrasts+
+              (nStimuliContrasts*typeContrasts+blockNumeric|ID))
+@elapsed fixedEffects66=fit(LinearMixedModel,modelFormula, dataset,REML=false)
+#n*sex*type
+modelFormula=@formula(acc~nStimuliContrasts+typeContrasts+
+              blockNumeric+nStimuliContrasts&typeContrasts&sexContrasts+
+              (nStimuliContrasts*typeContrasts+blockNumeric|ID))
+@elapsed fixedEffects67=fit(LinearMixedModel,modelFormula, dataset,REML=false)
+#comparison
+show(MixedModels.likelihoodratiotest(fixedEffects6,fixedEffects64))
+show(MixedModels.likelihoodratiotest(fixedEffects6,fixedEffects65))
+show(MixedModels.likelihoodratiotest(fixedEffects6,fixedEffects66))
+show(MixedModels.likelihoodratiotest(fixedEffects6,fixedEffects67))

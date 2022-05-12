@@ -49,7 +49,7 @@ markOutliers=function(dataset,verbose){
   possibleOutliers3=datasetByID[which(datasetByID$accAttemptsAvg<2/3 &
                                         datasetByID$firstAnswerSelectedAvg>0.4),]
   #too few attempts
-  possibleOutliers4=datasetByID[which(datasetByID$attemptsAvg<=0.5 & (datasetByID$timeAvg+datasetByID$attemptsAvg<1)),]
+  possibleOutliers4=datasetByID[which(datasetByID$attemptsAvg<=0.5 & datasetByID$accAttemptsAvg<2/3),]
   #combine
   outliers=unique(rbind(possibleOutliers1,possibleOutliers2,possibleOutliers3,possibleOutliers4))
   #console output
@@ -65,6 +65,10 @@ markOutliers=function(dataset,verbose){
   }
   #mark outliers in original dataset
   dataset$outlier=ifelse(dataset$ID %in% outliers$ID,TRUE,FALSE)
+  dataset$outlier1=ifelse(dataset$ID %in% possibleOutliers1$ID,TRUE,FALSE)
+  dataset$outlier2=ifelse(dataset$ID %in% possibleOutliers2$ID,TRUE,FALSE)
+  dataset$outlier3=ifelse(dataset$ID %in% possibleOutliers3$ID,TRUE,FALSE)
+  dataset$outlier4=ifelse(dataset$ID %in% possibleOutliers4$ID,TRUE,FALSE)
   #generate outlier graph and speed accuracy trade offs
   library(ggplot2)
   datasetByID$outlier1=ifelse(datasetByID$ID %in% possibleOutliers1$ID,"1 ","")

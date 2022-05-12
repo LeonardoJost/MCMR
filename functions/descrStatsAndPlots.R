@@ -23,41 +23,41 @@ datasetAnalysis=read.csv(file="output\\dataset.csv",sep=";")
 dataset=read.csv(file="dataset\\dataset.csv",sep=";")
 datasetByIDandBlock=read.csv(file="dataset\\datasetGrouped.csv",sep=";")
 
-#print descriptive statistics
-outliers=unique(datasetAnalysis[which(datasetAnalysis$outlier),c("ID","STEM","Experience","sex")])
-n_occur=data.frame(table(paste(outliers$STEM,paste(outliers$Experience,outliers$sex))))
-print(n_occur)
-##number of each combination of between factors
-datasetBetweenFactors=unique(datasetAnalysis[,c("ID","sex","STEM","Experience")])
-nrow(datasetBetweenFactors)
-n_occur=data.frame(table(paste(datasetBetweenFactors$sex,paste(datasetBetweenFactors$STEM,datasetBetweenFactors$Experience))))
-print(n_occur)
-
+# #print descriptive statistics
+# outliers=unique(datasetAnalysis[which(datasetAnalysis$outlier),c("ID","STEM","Experience","sex")])
+# n_occur=data.frame(table(paste(outliers$STEM,paste(outliers$Experience,outliers$sex))))
+# print(n_occur)
+# ##number of each combination of between factors
+# datasetBetweenFactors=unique(datasetAnalysis[,c("ID","sex","STEM","Experience")])
+# nrow(datasetBetweenFactors)
+# n_occur=data.frame(table(paste(datasetBetweenFactors$sex,paste(datasetBetweenFactors$STEM,datasetBetweenFactors$Experience))))
+# print(n_occur)
+# 
 #number of each combination of between factors
-datasetBetweenFactors=unique(datasetAnalysis[,c("ID","sex","Experience")])
+datasetBetweenFactors=unique(datasetAnalysis[,c("ID","sex","education")])
 nrow(datasetBetweenFactors)
-n_occur=data.frame(table(paste(datasetBetweenFactors$sex,datasetBetweenFactors$Experience)))
+n_occur=data.frame(table(paste(datasetBetweenFactors$sex,datasetBetweenFactors$education)))
 print(n_occur)
-
-#outliers by sex
-outlierIDs=unique(datasetAnalysis[,c("outlier","ID","sex")])
-n_occur=data.frame(table(paste(outlierIDs$outlier,outlierIDs$sex)))
-print(n_occur)
-
-#outliers by experience
-outlierIDs=unique(datasetAnalysis[,c("outlier","ID","sex","experienceAcute","experienceChronic")])
-n_occur=data.frame(table(paste(outlierIDs$outlier,outlierIDs$sex,outlierIDs$experienceAcute,outlierIDs$experienceChronic)))
-print(n_occur)
-
-#overall outliers
-outlierIDs=unique(datasetAnalysis[,c("outlier","ID")])
-n_occur=data.frame(table(paste(outlierIDs$outlier)))
-print(n_occur)
-
-#remove outliers
-datasetAnalysis=datasetAnalysis[which(!datasetAnalysis$outlier & !is.na(datasetAnalysis$sex)),]
-#remove participants with experience
-datasetAnalysis=datasetAnalysis[which((datasetAnalysis$experienceAcute=="no" & datasetAnalysis$experienceChronic=="no") | datasetAnalysis$experience=="no"),]
+# 
+# #outliers by sex
+# outlierIDs=unique(datasetAnalysis[,c("outlier","ID","sex")])
+# n_occur=data.frame(table(paste(outlierIDs$outlier,outlierIDs$sex)))
+# print(n_occur)
+# 
+# #outliers by experience
+# outlierIDs=unique(datasetAnalysis[,c("outlier","ID","sex","experienceAcute","experienceChronic")])
+# n_occur=data.frame(table(paste(outlierIDs$outlier,outlierIDs$sex,outlierIDs$experienceAcute,outlierIDs$experienceChronic)))
+# print(n_occur)
+# 
+# #overall outliers
+# outlierIDs=unique(datasetAnalysis[,c("outlier","ID")])
+# n_occur=data.frame(table(paste(outlierIDs$outlier)))
+# print(n_occur)
+# 
+# #remove outliers
+# datasetAnalysis=datasetAnalysis[which(!datasetAnalysis$outlier & !is.na(datasetAnalysis$sex)),]
+# #remove participants with experience
+# datasetAnalysis=datasetAnalysis[which((datasetAnalysis$experienceAcute=="no" & datasetAnalysis$experienceChronic=="no") | datasetAnalysis$experience=="no"),]
 
 # #create summarized datasets
 # library(plyr)
@@ -107,6 +107,15 @@ ggplot(datasetByIDandBlock,aes(y=attempts,x=nStimuli, fill=sex, shape=typeOfAlte
   guides(fill="none") + 
   theme_classic() + theme(legend.position = "right")
 ggsave("figs/MR/LinePlotAttempts.png")
+#plot fully correct trials as line graph (traditional scoring system)
+ggplot(datasetByIDandBlock[which(datasetByIDandBlock$nStimuli==8),],aes(y=accScoringSystem,x=typeOfAlternatives, fill=sex,color=sex,linetype=sex)) + 
+  #stat_summary(na.rm=TRUE, fun=mean, geom="line") +
+  stat_summary(na.rm=TRUE, fun=mean, geom="point", size=2) +
+  stat_summary(fun.data=mean_se,geom="errorbar",position = "dodge",aes(linetype=NULL)) +
+  labs(x="Type of alternatives",y="Proportion of correct items",color="Sex",linetype="Sex",shape="Type of alternatives") + 
+  guides(fill="none") + 
+  theme_classic() + theme(legend.position = "right")
+ggsave("figs/MR/LinePlotScoringSystem.png")
 #plot data as line graph separated by experience and stem
 ns=ddply(datasetByIDandBlock,
          .(experience),
@@ -127,7 +136,7 @@ ggsave("figs/MR/LinePlotInteraction.png")
 #effect of angle
 #create dataset summarized by angle 
 datasetByIdAndDeg=ddply(datasetAnalysis,
-                        .(ID,Experience,STEM,sex,nStimuli,typeOfAlternatives,deg),
+                        .(ID,sex,nStimuli,typeOfAlternatives,deg),
                         summarize,
                         hits=sum((type=="hit")),
                         misses=sum((type=="incorrect")),
@@ -139,3 +148,13 @@ ggplot(datasetByIdAndDeg,aes(y=acc,x=deg)) +
   guides(fill="none") + 
   theme_classic() + theme(legend.position = "right")
 ggsave("figs/MR/Angle.png")
+
+#plot questionnairedata
+#education
+ggplot(questionnaireDataNoOutliers,aes(x=factor(education),color=sex, fill=sex)) +
+  geom_bar(stat="count",position="dodge")  + 
+  xlab("education") + ylab("count") +
+  scale_x_discrete(guide = guide_axis(n.dodge=3),limits=c("Kein Schulabschluss", "Hauptschulabschluss", "Mittlere Reife" ,"Abitur","Studium","Bachelor","Master/Diplom","Promotion")) +
+  theme_classic() + theme(legend.position = "right")
+ggsave("figs/education.png")
+

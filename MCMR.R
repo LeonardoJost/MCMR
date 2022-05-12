@@ -35,7 +35,7 @@ questionnaireOutFile="output\\questionnaire" #.csv added at end, leave empty if 
 #outlierFactor=3 #factor of sd to define outliers in MR
 block=c("main1","main2","main3","main4")#name of interesting block of data
 questionnaireDataCols=c("ID","age","education","study","work","sex","experience","experienceAcute","experienceChronic") #which questionnaire columns shall be kept for merging/summarizing
-questionnaireDataColsForAnalysis=c("ID","sex","experience","experienceAcute","experienceChronic") #which questionnaire columns shall be kept for analysis
+questionnaireDataColsForAnalysis=c("ID","sex","education","experience","experienceAcute","experienceChronic") #which questionnaire columns shall be kept for analysis
 
 ##read and write data
 #read data
@@ -84,10 +84,13 @@ datasetNoOutlier=dataset[which(!dataset$outlier),]
 #remove participants with experience
 datasetNoOutlier=datasetNoOutlier[which((datasetNoOutlier$experienceAcute=="no" & datasetNoOutlier$experienceChronic=="no") | datasetNoOutlier$experience=="no"),]
 
-#add sum contrasted variables
-datasetNoOutlier$sexContrasts=sapply(as.factor(datasetNoOutlier$sex),function(i) contr.sum(2)[i,])
-datasetNoOutlier$typeContrasts=sapply(as.factor(datasetNoOutlier$typeOfAlternatives),function(i) contr.sum(2)[i,])
-datasetNoOutlier$nStimuliContrasts=sapply(as.factor(datasetNoOutlier$nStimuli),function(i) contr.sum(2)[i,])
+#add sum contrasted variables (divide by 2 for scaling)
+datasetNoOutlier$sexContrasts=sapply(as.factor(datasetNoOutlier$sex),function(i) contr.sum(2)[i,])/2
+datasetNoOutlier$typeContrasts=sapply(as.factor(datasetNoOutlier$typeOfAlternatives),function(i) contr.sum(2)[i,])/2
+datasetNoOutlier$nStimuliContrasts=sapply(as.factor(datasetNoOutlier$nStimuli),function(i) contr.sum(2)[i,])/2
+#add education in ascending order (from alphabetical factors)
+datasetNoOutlier$educationNumeric=c(4,6,2,1,7,3,8,5)[as.numeric(as.factor(datasetNoOutlier$education))]
+
 
 #save dataset to csv
 write.table(datasetNoOutlier,file="output\\dataset.csv",sep=";", row.names = F)
@@ -96,18 +99,21 @@ write.table(datasetNoOutlier,file="output\\dataset.csv",sep=";", row.names = F)
 library(plyr)
 #create dataset summarized by trials (over multiple items of trials)
 datasetByIDandTrial=ddply(datasetNoOutlier,
-                          .(ID,block,sexContrasts,nStimuliContrasts,typeContrasts,sex,nStimuli,typeOfAlternatives,trialNumber,attemptedItems),
+                          .(ID,block,sexContrasts,nStimuliContrasts,typeContrasts,sex,nStimuli,typeOfAlternatives,trialNumber,attemptedItems,education,educationNumeric),
                           summarize,
                           hits=sum((type=="hit")),
                           incorrects=sum((type=="incorrect")))
 #create dataset summarized by blocks
 datasetByIDandBlock=ddply(datasetByIDandTrial,
-                          .(ID,block,sexContrasts,nStimuliContrasts,typeContrasts,sex,nStimuli,typeOfAlternatives),
+                          .(ID,block,sexContrasts,nStimuliContrasts,typeContrasts,sex,nStimuli,typeOfAlternatives,education,educationNumeric),
                           summarize,
                           hitSum=sum(hits),
                           incorrectSum=sum(incorrects),
                           acc=hitSum/24,
                           accAttempts=hitSum/(hitSum+incorrectSum),
-                          attempts=sum(attemptedItems,na.rm=T))
+                          attempts=sum(attemptedItems,na.rm=T),
+                          fullCorrectTrials=sum(hits==nStimuli/2),
+                          accScoringSystem=nStimuli[1]*sum(hits==nStimuli/2)/24/2)
 #save dataset to csv
 write.table(datasetByIDandBlock,file="output\\datasetGrouped.csv",sep=";", row.names = F)
+

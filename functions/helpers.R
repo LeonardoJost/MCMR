@@ -71,6 +71,15 @@ stringToNumArray=function(vec){
   return(vec)
 }
 
+stringToCharArray=function(vec){
+  #remove brackets
+  vec=gsub("\\[|\\]", "",vec)
+  #split by commas
+  vec=strsplit(vec,", ")
+  vec=lapply(vec, function(x) as.character(unlist(x)))
+  return(vec)
+}
+
 #remove digits from string, trim to length set by trim
 stringRemoveNum=function(vec,trim){
   vec=gsub("[[:digit:]]+", "", vec)
@@ -99,6 +108,10 @@ mode = function(vec) {
 
 #return all elements and number of occurences
 modes = function(vec) {
+  #unlist in case of character arrays marked by []
+  if(any(grepl("\\[|\\]",vec))){
+    vec=unlist(stringToCharArray(vec))
+  }
   dat=as.data.frame(table(vec))
   return(dat[order(dat$Freq, as.numeric(row.names(dat)),decreasing=TRUE),])
 }

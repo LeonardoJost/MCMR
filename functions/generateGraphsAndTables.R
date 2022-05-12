@@ -36,7 +36,7 @@ calculateMeansQuestionnaire=function(verbose,questionnaireData,questionnaireOutF
       print("Means by sex:")
       print(questionnaireDataMeansBysex)
       print("Overall means:")
-      print(subset(questionnaireDataMeans,select=-c(ID)))
+      print(questionnaireDataMeans)
     }
     write.table(questionnaireDataMeansBysex,file=paste(questionnaireOutFile,"MeansBysex.csv", sep=""),sep=";", col.names=NA)
     write.table(questionnaireDataMeans,file=paste(questionnaireOutFile,"Means.csv", sep=""),sep=";", col.names=NA)
