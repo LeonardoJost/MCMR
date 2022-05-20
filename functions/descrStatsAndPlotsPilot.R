@@ -18,63 +18,6 @@
 dir.create("figs")
 dir.create("figs/MR")
 
-#load full dataset
-datasetAnalysis=read.csv(file="output\\dataset.csv",sep=";")
-dataset=read.csv(file="dataset\\dataset.csv",sep=";")
-datasetByIDandBlock=read.csv(file="dataset\\datasetGrouped.csv",sep=";")
-
-# #print descriptive statistics
-# outliers=unique(datasetAnalysis[which(datasetAnalysis$outlier),c("ID","STEM","Experience","sex")])
-# n_occur=data.frame(table(paste(outliers$STEM,paste(outliers$Experience,outliers$sex))))
-# print(n_occur)
-# ##number of each combination of between factors
-# datasetBetweenFactors=unique(datasetAnalysis[,c("ID","sex","STEM","Experience")])
-# nrow(datasetBetweenFactors)
-# n_occur=data.frame(table(paste(datasetBetweenFactors$sex,paste(datasetBetweenFactors$STEM,datasetBetweenFactors$Experience))))
-# print(n_occur)
-# 
-#number of each combination of between factors
-datasetBetweenFactors=unique(datasetAnalysis[,c("ID","sex","education")])
-nrow(datasetBetweenFactors)
-n_occur=data.frame(table(paste(datasetBetweenFactors$sex,datasetBetweenFactors$education)))
-print(n_occur)
-# 
-# #outliers by sex
-# outlierIDs=unique(datasetAnalysis[,c("outlier","ID","sex")])
-# n_occur=data.frame(table(paste(outlierIDs$outlier,outlierIDs$sex)))
-# print(n_occur)
-# 
-# #outliers by experience
-# outlierIDs=unique(datasetAnalysis[,c("outlier","ID","sex","experienceAcute","experienceChronic")])
-# n_occur=data.frame(table(paste(outlierIDs$outlier,outlierIDs$sex,outlierIDs$experienceAcute,outlierIDs$experienceChronic)))
-# print(n_occur)
-# 
-# #overall outliers
-# outlierIDs=unique(datasetAnalysis[,c("outlier","ID")])
-# n_occur=data.frame(table(paste(outlierIDs$outlier)))
-# print(n_occur)
-# 
-# #remove outliers
-# datasetAnalysis=datasetAnalysis[which(!datasetAnalysis$outlier & !is.na(datasetAnalysis$sex)),]
-# #remove participants with experience
-# datasetAnalysis=datasetAnalysis[which((datasetAnalysis$experienceAcute=="no" & datasetAnalysis$experienceChronic=="no") | datasetAnalysis$experience=="no"),]
-
-# #create summarized datasets
-# library(plyr)
-# #create dataset summarized by trials (over multiple items of trials)
-# datasetByIDandTrial=ddply(datasetAnalysis,
-#                           .(ID,block,experience,sex,nStimuli,typeOfAlternatives,trialNumber),
-#                           summarize,
-#                           hits=sum((type=="hit")),
-#                           incorrects=sum((type=="incorrect")))
-# #create dataset summarized by blocks
-# datasetByIDandBlock=ddply(datasetByIDandTrial,
-#                           .(ID,block,experience,sex,nStimuli,typeOfAlternatives),
-#                           summarize,
-#                           hitSum=sum(hits),
-#                           incorrectSum=sum(incorrects),
-#                           acc=hitSum/24,
-#                           accAttempts=hitSum/(hitSum+incorrectSum))
 #save full dataset to csv
 library(ggplot2)
 #plot accuracy data as line graph (mean Data by degree and condition)
@@ -86,7 +29,7 @@ ggplot(datasetByIDandBlock,aes(y=acc,x=nStimuli, fill=sex, shape=typeOfAlternati
   labs(x="Number of alternatives",y="Proportion of correct items",color="Sex",linetype="Sex",shape="Type of alternatives") + 
   guides(fill="none") + 
   theme_classic() + theme(legend.position = "right")
-ggsave("figs/MR/LinePlot.png")
+ggsave("figs/MR/LinePlotPilot.png")
 #plot attempted accuracy data as line graph (mean Data by degree and condition)
 ggplot(datasetByIDandBlock,aes(y=accAttempts,x=nStimuli, fill=sex, shape=typeOfAlternatives,color=sex,linetype=sex)) + 
   stat_summary(na.rm=TRUE, fun=mean, geom="line") +
@@ -96,7 +39,7 @@ ggplot(datasetByIDandBlock,aes(y=accAttempts,x=nStimuli, fill=sex, shape=typeOfA
   labs(x="Number of alternatives",y="Proportion of correct attempted items",color="Sex",linetype="Sex",shape="Type of alternatives") + 
   guides(fill="none") + 
   theme_classic() + theme(legend.position = "right")
-ggsave("figs/MR/LinePlotAttemptedAcc.png")
+ggsave("figs/MR/LinePlotAttemptedAccPilot.png")
 #plot attempted data as line graph (mean Data by degree and condition)
 ggplot(datasetByIDandBlock,aes(y=attempts,x=nStimuli, fill=sex, shape=typeOfAlternatives,color=sex,linetype=sex)) + 
   stat_summary(na.rm=TRUE, fun=mean, geom="line") +
@@ -106,7 +49,7 @@ ggplot(datasetByIDandBlock,aes(y=attempts,x=nStimuli, fill=sex, shape=typeOfAlte
   labs(x="Number of alternatives",y="Attempted items",color="Sex",linetype="Sex",shape="Type of alternatives") + 
   guides(fill="none") + 
   theme_classic() + theme(legend.position = "right")
-ggsave("figs/MR/LinePlotAttempts.png")
+ggsave("figs/MR/LinePlotAttemptsPilot.png")
 #plot fully correct trials as line graph (traditional scoring system)
 ggplot(datasetByIDandBlock[which(datasetByIDandBlock$nStimuli==8),],aes(y=accScoringSystem,x=typeOfAlternatives, fill=sex,color=sex,linetype=sex)) + 
   #stat_summary(na.rm=TRUE, fun=mean, geom="line") +
@@ -115,7 +58,7 @@ ggplot(datasetByIDandBlock[which(datasetByIDandBlock$nStimuli==8),],aes(y=accSco
   labs(x="Type of alternatives",y="Proportion of correct items",color="Sex",linetype="Sex",shape="Type of alternatives") + 
   guides(fill="none") + 
   theme_classic() + theme(legend.position = "right")
-ggsave("figs/MR/LinePlotScoringSystem.png")
+ggsave("figs/MR/LinePlotScoringSystemPilot.png")
 #plot data as line graph separated by experience and stem
 ns=ddply(datasetByIDandBlock,
          .(experience),
@@ -126,16 +69,16 @@ ggplot(datasetByIDandBlock,aes(y=acc,x=nStimuli, fill=sex, shape=typeOfAlternati
   stat_summary(na.rm=TRUE, fun=mean, geom="point", size=2) +
   stat_summary(fun.data=mean_se,geom="errorbar",position = "dodge",aes(linetype=NULL)) +
   scale_x_continuous(breaks=c(2,4,8))+
-  facet_grid(Experience ~ STEM)+
+  facet_grid(experience ~ STEM)+
   labs(x="Number of alternatives",y="Proportion of correct items",color="Sex",linetype="Sex",shape="Type of alternatives") + 
   guides(fill="none") + 
-  geom_text(data=plyr::count(datasetByIDandBlock, vars = c("Experience","STEM")), aes(x=6, y=0.5, label=paste0("n = ",freq/6)), colour="black", inherit.aes=FALSE, parse=FALSE)+
+  geom_text(data=plyr::count(datasetByIDandBlock, vars = c("experience","STEM")), aes(x=6, y=0.5, label=paste0("n = ",freq/6)), colour="black", inherit.aes=FALSE, parse=FALSE)+
   theme_bw() + theme(legend.position = "right")
-ggsave("figs/MR/LinePlotInteraction.png")
+ggsave("figs/MR/LinePlotInteractionPilot.png")
 
 #effect of angle
 #create dataset summarized by angle 
-datasetByIdAndDeg=ddply(datasetAnalysis,
+datasetByIdAndDeg=ddply(datasetNoOutlier,
                         .(ID,sex,nStimuli,typeOfAlternatives,deg),
                         summarize,
                         hits=sum((type=="hit")),
@@ -148,15 +91,7 @@ ggplot(datasetByIdAndDeg,aes(y=acc,x=deg)) +
   guides(fill="none") + 
   scale_x_continuous(breaks=c(45,90,135,180))+
   theme_classic() + theme(legend.position = "right")
-ggsave("figs/MR/Angle.png")
+ggsave("figs/MR/AnglePilot.png")
 
-#plot questionnairedata
-#education
-ggplot(questionnaireDataNoOutliers,aes(x=factor(education),color=sex, fill=sex)) +
-  geom_bar(stat="count",position="dodge")  + 
-  xlab("education") + ylab("count") +
-  scale_x_discrete(guide = guide_axis(n.dodge=3),limits=c("Kein Schulabschluss", "Hauptschulabschluss", "Mittlere Reife" ,"Abitur","Studium","Bachelor","Master/Diplom","Promotion")) +
-  theme_classic() + theme(legend.position = "right")
-ggsave("figs/education.png")
 
-combineImages(c("figs/MR/LinePlotAttempts.png","figs/MR/LinePlotAttemptedAcc.png","figs/MR/LinePlotScoringSystem.png"),1,3,"figs/MR/combined.png")
+combineImages(c("figs/MR/LinePlotAttemptsPilot.png","figs/MR/LinePlotAttemptedAccPilot.png","figs/MR/LinePlotScoringSystemPilot.png"),1,3,"figs/MR/combinedPilot.png")

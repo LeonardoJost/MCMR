@@ -236,9 +236,9 @@ getDataOSWeb=function(verbose, folder, preText="", part="main",ending="csv") {
   }
   #change names
   dat$block=dat$aaBlock
-  dat$ID=dat$workerId #aaId for old version
+  dat$ID=dat$aaID #aaID for old version
   dat$aaBlock=NULL
-  dat$workerId=NULL
+  dat$aaID=NULL
   return(dat)
 }
 

@@ -52,10 +52,13 @@ questionnaireData$STEM=ifelse(grepl("MINT",questionnaireData$STEM),"STEM",
 #rename gender to sex
 questionnaireData$sex=questionnaireData$Gender
 questionnaireData$Gender=NULL
+#capitalize experience
+questionnaireData$experience=questionnaireData$Experience
+questionnaireData$Experience=NULL
 #unify data
 dataset=merge(MRData,questionnaireData,by="ID")
 #mark outliers
-dataset=markOutliers(dataset,verbose)
+dataset=markOutliers(dataset,verbose,blocks=6)
 #remove unnecessary column
 dataset$firstAnswerSelected=NULL
 #anonymise IDs to protect participant identity
@@ -68,15 +71,44 @@ dataset$typeContrasts=sapply(as.factor(dataset$typeOfAlternatives),function(i) c
 nStimuliContrasts=sapply(as.factor(dataset$nStimuli),function(i) contr.sum(3)[i,])
 dataset$nStimuliContrasts1=nStimuliContrasts[1,]
 dataset$nStimuliContrasts2=nStimuliContrasts[2,]
-dataset$ExperienceContrasts=sapply(as.factor(dataset$Experience),function(i) contr.sum(2)[i,])
+dataset$experienceContrasts=sapply(as.factor(dataset$experience),function(i) contr.sum(2)[i,])
 STEMContrasts=sapply(as.factor(dataset$STEM),function(i) contr.sum(3)[i,])
 dataset$STEMContrasts1=STEMContrasts[1,]
 dataset$STEMContrasts2=STEMContrasts[2,]
 
 #rename entries to english
 dataset$sex=ifelse(dataset$sex=="m","male","female")
-dataset$Experience=ifelse(dataset$Experience=="Ja","yes","no")
+dataset$experience=ifelse(dataset$experience=="Ja","yes","no")
 
 
 #save full dataset to csv
-write.table(dataset,file="output\\dataset.csv",sep=";", row.names = F)
+write.table(dataset,file="output\\datasetFullPilot.csv",sep=";", row.names = F)
+
+#remove outliers
+datasetNoOutlier=dataset[which(!dataset$outlier),]
+datasetNoOutlier=datasetNoOutlier[which(!is.na(datasetNoOutlier$sex)),]
+
+#save dataset to csv
+write.table(datasetNoOutlier,file="output\\datasetPilot.csv",sep=";", row.names = F)
+
+#create summarized datasets
+library(plyr)
+#create dataset summarized by trials (over multiple items of trials)
+datasetByIDandTrial=ddply(datasetNoOutlier,
+                          .(ID,block,experience,STEMContrasts1,STEMContrasts2,experienceContrasts,STEM,sexContrasts,nStimuliContrasts1,nStimuliContrasts2,typeContrasts,sex,nStimuli,typeOfAlternatives,trialNumber,attemptedItems),
+                          summarize,
+                          hits=sum((type=="hit")),
+                          incorrects=sum((type=="incorrect")))
+#create dataset summarized by blocks
+datasetByIDandBlock=ddply(datasetByIDandTrial,
+                          .(ID,block,experience,STEMContrasts1,STEMContrasts2,experienceContrasts,STEM,sexContrasts,nStimuliContrasts1,nStimuliContrasts2,typeContrasts,sex,nStimuli,typeOfAlternatives),
+                          summarize,
+                          hitSum=sum(hits),
+                          incorrectSum=sum(incorrects),
+                          acc=hitSum/24,
+                          accAttempts=hitSum/(hitSum+incorrectSum),
+                          attempts=sum(attemptedItems,na.rm=T),
+                          fullCorrectTrials=sum(hits==nStimuli/2),
+                          accScoringSystem=nStimuli[1]*sum(hits==nStimuli/2)/24/2)
+#save dataset to csv
+write.table(datasetByIDandBlock,file="output\\datasetGroupedPilot.csv",sep=";", row.names = F)
