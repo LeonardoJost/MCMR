@@ -18,7 +18,7 @@ source("functions/helpers.R")
 
 library(plyr)
 
-markOutliers=function(dataset,verbose,blocks=4){
+markOutliers=function(dataset,verbose){
   #averages for each participant and condition
   datasetByIDandBlock=ddply(dataset,
                             .(ID,block,experience,sex),
@@ -34,10 +34,10 @@ markOutliers=function(dataset,verbose,blocks=4){
   datasetByID=ddply(datasetByIDandBlock,
                     .(ID,experience,sex),
                     summarize,
-                    timeAvg=sum(time)/blocks,
-                    hitsAvg=sum(hits)/blocks,
-                    incorrectsAvg=sum(incorrects)/blocks,
-                    attemptsAvg=sum(attempts)/blocks,
+                    timeAvg=sum(time)/4,
+                    hitsAvg=sum(hits)/4,
+                    incorrectsAvg=sum(incorrects)/4,
+                    attemptsAvg=sum(attempts)/4,
                     accAttemptsAvg=hitsAvg/(hitsAvg+incorrectsAvg),
                     accAvg=sum(hitsAvg/24),
                     firstAnswerSelectedAvg=mean(abs(firstAnswerSelected-1/2)))
