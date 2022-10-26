@@ -35,7 +35,7 @@ questionnaireOutFile="output\\questionnaire" #.csv added at end, leave empty if 
 #outlierFactor=3 #factor of sd to define outliers in MR
 block=c("main1","main2","main3","main4")#name of interesting block of data
 questionnaireDataCols=c("ID","age","education","study","work","sex","experience","experienceAcute","experienceChronic") #which questionnaire columns shall be kept for merging/summarizing
-questionnaireDataColsForAnalysis=c("ID","sex","education","experience","experienceAcute","experienceChronic") #which questionnaire columns shall be kept for analysis
+questionnaireDataColsForAnalysis=c("ID","sex","education","experience","experienceAcute","experienceChronic","age") #which questionnaire columns shall be kept for analysis
 
 ##read and write data
 #read data
@@ -99,13 +99,13 @@ write.table(datasetNoOutlier,file="output\\dataset.csv",sep=";", row.names = F)
 library(plyr)
 #create dataset summarized by trials (over multiple items of trials)
 datasetByIDandTrial=ddply(datasetNoOutlier,
-                          .(ID,block,sexContrasts,nStimuliContrasts,typeContrasts,sex,nStimuli,typeOfAlternatives,trialNumber,attemptedItems,education,educationNumeric),
+                          .(ID,block,sexContrasts,nStimuliContrasts,typeContrasts,sex,nStimuli,typeOfAlternatives,trialNumber,attemptedItems,education,educationNumeric,age),
                           summarize,
                           hits=sum((type=="hit")),
                           incorrects=sum((type=="incorrect")))
 #create dataset summarized by blocks
 datasetByIDandBlock=ddply(datasetByIDandTrial,
-                          .(ID,block,sexContrasts,nStimuliContrasts,typeContrasts,sex,nStimuli,typeOfAlternatives,education,educationNumeric),
+                          .(ID,block,sexContrasts,nStimuliContrasts,typeContrasts,sex,nStimuli,typeOfAlternatives,education,educationNumeric,age),
                           summarize,
                           hitSum=sum(hits),
                           incorrectSum=sum(incorrects),

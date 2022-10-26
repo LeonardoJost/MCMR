@@ -54,28 +54,6 @@ print(n_occur)
 # n_occur=data.frame(table(paste(outlierIDs$outlier)))
 # print(n_occur)
 # 
-# #remove outliers
-# datasetAnalysis=datasetAnalysis[which(!datasetAnalysis$outlier & !is.na(datasetAnalysis$sex)),]
-# #remove participants with experience
-# datasetAnalysis=datasetAnalysis[which((datasetAnalysis$experienceAcute=="no" & datasetAnalysis$experienceChronic=="no") | datasetAnalysis$experience=="no"),]
-
-# #create summarized datasets
-# library(plyr)
-# #create dataset summarized by trials (over multiple items of trials)
-# datasetByIDandTrial=ddply(datasetAnalysis,
-#                           .(ID,block,experience,sex,nStimuli,typeOfAlternatives,trialNumber),
-#                           summarize,
-#                           hits=sum((type=="hit")),
-#                           incorrects=sum((type=="incorrect")))
-# #create dataset summarized by blocks
-# datasetByIDandBlock=ddply(datasetByIDandTrial,
-#                           .(ID,block,experience,sex,nStimuli,typeOfAlternatives),
-#                           summarize,
-#                           hitSum=sum(hits),
-#                           incorrectSum=sum(incorrects),
-#                           acc=hitSum/24,
-#                           accAttempts=hitSum/(hitSum+incorrectSum))
-#save full dataset to csv
 library(ggplot2)
 #plot accuracy data as line graph (mean Data by degree and condition)
 ggplot(datasetByIDandBlock,aes(y=acc,x=nStimuli, fill=sex, shape=typeOfAlternatives,color=sex,linetype=sex)) + 
@@ -83,9 +61,9 @@ ggplot(datasetByIDandBlock,aes(y=acc,x=nStimuli, fill=sex, shape=typeOfAlternati
   stat_summary(na.rm=TRUE, fun=mean, geom="point", size=2) +
   stat_summary(fun.data=mean_se,geom="errorbar",position = "dodge",aes(linetype=NULL)) +
   scale_x_continuous(breaks=c(2,8))+
-  labs(x="Number of alternatives",y="Proportion of correct items",color="Sex",linetype="Sex",shape="Type of alternatives") + 
+  labs(x="Number of alternatives",y="Proportion of correct items",color="Sex",linetype="Sex",shape="Type of\nalternatives") + 
   guides(fill="none") + 
-  theme_classic() + theme(legend.position = "right")
+  theme_classic() + theme(text = element_text(size=15),legend.position = "right")
 ggsave("figs/MR/LinePlot.png")
 #plot attempted accuracy data as line graph (mean Data by degree and condition)
 ggplot(datasetByIDandBlock,aes(y=accAttempts,x=nStimuli, fill=sex, shape=typeOfAlternatives,color=sex,linetype=sex)) + 
@@ -93,9 +71,9 @@ ggplot(datasetByIDandBlock,aes(y=accAttempts,x=nStimuli, fill=sex, shape=typeOfA
   stat_summary(na.rm=TRUE, fun=mean, geom="point", size=2) +
   stat_summary(fun.data=mean_se,geom="errorbar",position = "dodge",aes(linetype=NULL)) +
   scale_x_continuous(breaks=c(2,8))+
-  labs(x="Number of alternatives",y="Proportion of correct attempted items",color="Sex",linetype="Sex",shape="Type of alternatives") + 
+  labs(x="Number of alternatives",y="Proportion of correct attempted items",color="Sex",linetype="Sex",shape="Type of\nalternatives") + 
   guides(fill="none") + 
-  theme_classic() + theme(legend.position = "right")
+  theme_classic() + theme(text = element_text(size=15),legend.position = "right")
 ggsave("figs/MR/LinePlotAttemptedAcc.png")
 #plot attempted data as line graph (mean Data by degree and condition)
 ggplot(datasetByIDandBlock,aes(y=attempts,x=nStimuli, fill=sex, shape=typeOfAlternatives,color=sex,linetype=sex)) + 
@@ -103,18 +81,18 @@ ggplot(datasetByIDandBlock,aes(y=attempts,x=nStimuli, fill=sex, shape=typeOfAlte
   stat_summary(na.rm=TRUE, fun=mean, geom="point", size=2) +
   stat_summary(fun.data=mean_se,geom="errorbar",position = "dodge",aes(linetype=NULL)) +
   scale_x_continuous(breaks=c(2,8))+
-  labs(x="Number of alternatives",y="Attempted items",color="Sex",linetype="Sex",shape="Type of alternatives") + 
+  labs(x="Number of alternatives",y="Attempted items",color="Sex",linetype="Sex",shape="Type of\nalternatives") + 
   guides(fill="none") + 
-  theme_classic() + theme(legend.position = "right")
+  theme_classic() + theme(text = element_text(size=15),legend.position = "right")
 ggsave("figs/MR/LinePlotAttempts.png")
 #plot fully correct trials as line graph (traditional scoring system)
 ggplot(datasetByIDandBlock[which(datasetByIDandBlock$nStimuli==8),],aes(y=accScoringSystem,x=typeOfAlternatives, fill=sex,color=sex,linetype=sex)) + 
   #stat_summary(na.rm=TRUE, fun=mean, geom="line") +
   stat_summary(na.rm=TRUE, fun=mean, geom="point", size=2) +
   stat_summary(fun.data=mean_se,geom="errorbar",position = "dodge",aes(linetype=NULL)) +
-  labs(x="Type of alternatives",y="Proportion of correct items",color="Sex",linetype="Sex",shape="Type of alternatives") + 
+  labs(x="Type of alternatives",y="Proportion of fully correct trials",color="Sex",linetype="Sex",shape="Type of alternatives") + 
   guides(fill="none") + 
-  theme_classic() + theme(legend.position = "right")
+  theme_classic() + theme(text = element_text(size=15),legend.position = "right")
 ggsave("figs/MR/LinePlotScoringSystem.png")
 #plot data as line graph separated by experience and stem
 ns=ddply(datasetByIDandBlock,
@@ -158,5 +136,45 @@ ggplot(questionnaireDataNoOutliers,aes(x=factor(education),color=sex, fill=sex))
   scale_x_discrete(guide = guide_axis(n.dodge=3),limits=c("Kein Schulabschluss", "Hauptschulabschluss", "Mittlere Reife" ,"Abitur","Studium","Bachelor","Master/Diplom","Promotion")) +
   theme_classic() + theme(legend.position = "right")
 ggsave("figs/education.png")
+#age
+ggplot(questionnaireDataNoOutliers,aes(x=age,color=sex, fill=sex)) +
+  geom_bar(stat="count",position="dodge")  + 
+  xlab("education") + ylab("count") +
+  theme_classic() + theme(legend.position = "right")
+ggsave("figs/age.png")
 
 combineImages(c("figs/MR/LinePlotAttempts.png","figs/MR/LinePlotAttemptedAcc.png","figs/MR/LinePlotScoringSystem.png"),1,3,"figs/MR/combined.png")
+
+
+
+# more restrictive outlier detection
+library(plyr)
+#overall averages for each participant
+datasetByID=ddply(datasetByIDandBlock,
+                  .(ID,sex),
+                  summarize,
+                  hitsAvg=sum(hitSum)/4,
+                  incorrectsAvg=sum(incorrectSum)/4,
+                  attemptsAvg=sum(attempts)/4,
+                  accAttemptsAvg=hitsAvg/(hitsAvg+incorrectsAvg),
+                  accAvg=sum(hitsAvg/24))
+#exclude those with attempted accuracy at or below 0.6
+possibleOutliers1=datasetByID[which(datasetByID$accAttemptsAvg<=0.6),] #136 outliers
+sum(possibleOutliers1$sex=="male") #65
+sum(possibleOutliers1$sex=="female") #71
+datasetByIDandBlockRestrictiveOutlier=datasetByIDandBlock[which(!(datasetByIDandBlock$ID %in% possibleOutliers1$ID)),]
+#plot and save figure
+ggplot(datasetByIDandBlockRestrictiveOutlier,aes(y=acc,x=nStimuli, fill=sex, shape=typeOfAlternatives,color=sex,linetype=sex)) + 
+  stat_summary(na.rm=TRUE, fun=mean, geom="line") +
+  stat_summary(na.rm=TRUE, fun=mean, geom="point", size=2) +
+  stat_summary(fun.data=mean_se,geom="errorbar",position = "dodge",aes(linetype=NULL)) +
+  scale_x_continuous(breaks=c(2,8))+
+  labs(x="Number of alternatives",y="Proportion of correct items",color="Sex",linetype="Sex",shape="Type of\nalternatives") + 
+  guides(fill="none") + 
+  theme_classic() + theme(text = element_text(size=15),legend.position = "right")
+ggsave("figs/restrictiveOutliers.png")
+#save dataset
+write.table(datasetByIDandBlockRestrictiveOutlier,file="output\\datasetGroupedRestrictiveOutliers.csv",sep=";", row.names = F)
+
+combineImages(c("figs/restrictiveOutliers.png","figs/MR/LinePlotAttempts.png","figs/MR/LinePlotAttemptedAcc.png","figs/MR/LinePlotScoringSystem.png"),2,2,"figs/MR/combined.png")
+

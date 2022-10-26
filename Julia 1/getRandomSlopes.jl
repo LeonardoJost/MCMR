@@ -23,7 +23,7 @@ using Gadfly
 using CSV
 
 #read data
-dataset=CSV.read("dataset\\dataset.csv", DataFrame)
+dataset=CSV.read("dataset\\Exp1\\dataset.csv", DataFrame)
 #inspect data
 show(first(dataset,6))
 show(names(dataset))
