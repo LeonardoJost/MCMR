@@ -23,37 +23,7 @@ datasetAnalysis=read.csv(file="output\\dataset.csv",sep=";")
 dataset=read.csv(file="dataset\\dataset.csv",sep=";")
 datasetByIDandBlock=read.csv(file="dataset\\datasetGrouped.csv",sep=";")
 
-# #print descriptive statistics
-# outliers=unique(datasetAnalysis[which(datasetAnalysis$outlier),c("ID","STEM","Experience","sex")])
-# n_occur=data.frame(table(paste(outliers$STEM,paste(outliers$Experience,outliers$sex))))
-# print(n_occur)
-# ##number of each combination of between factors
-# datasetBetweenFactors=unique(datasetAnalysis[,c("ID","sex","STEM","Experience")])
-# nrow(datasetBetweenFactors)
-# n_occur=data.frame(table(paste(datasetBetweenFactors$sex,paste(datasetBetweenFactors$STEM,datasetBetweenFactors$Experience))))
-# print(n_occur)
-# 
-#number of each combination of between factors
-datasetBetweenFactors=unique(datasetAnalysis[,c("ID","sex","education")])
-nrow(datasetBetweenFactors)
-n_occur=data.frame(table(paste(datasetBetweenFactors$sex,datasetBetweenFactors$education)))
-print(n_occur)
-# 
-# #outliers by sex
-# outlierIDs=unique(datasetAnalysis[,c("outlier","ID","sex")])
-# n_occur=data.frame(table(paste(outlierIDs$outlier,outlierIDs$sex)))
-# print(n_occur)
-# 
-# #outliers by experience
-# outlierIDs=unique(datasetAnalysis[,c("outlier","ID","sex","experienceAcute","experienceChronic")])
-# n_occur=data.frame(table(paste(outlierIDs$outlier,outlierIDs$sex,outlierIDs$experienceAcute,outlierIDs$experienceChronic)))
-# print(n_occur)
-# 
-# #overall outliers
-# outlierIDs=unique(datasetAnalysis[,c("outlier","ID")])
-# n_occur=data.frame(table(paste(outlierIDs$outlier)))
-# print(n_occur)
-# 
+
 library(ggplot2)
 #plot accuracy data as line graph (mean Data by degree and condition)
 ggplot(datasetByIDandBlock,aes(y=acc,x=nStimuli, fill=sex, shape=typeOfAlternatives,color=sex,linetype=sex)) + 
@@ -139,11 +109,11 @@ ggsave("figs/education.png")
 #age
 ggplot(questionnaireDataNoOutliers,aes(x=age,color=sex, fill=sex)) +
   geom_bar(stat="count",position="dodge")  + 
-  xlab("education") + ylab("count") +
+  xlab("age in years") + ylab("count") +
   theme_classic() + theme(legend.position = "right")
 ggsave("figs/age.png")
 
-combineImages(c("figs/MR/LinePlotAttempts.png","figs/MR/LinePlotAttemptedAcc.png","figs/MR/LinePlotScoringSystem.png"),1,3,"figs/MR/combined.png")
+combineImages(c("figs/age.png","figs/education.png"),1,2,"figs/ageEducation.png")
 
 
 
@@ -178,3 +148,19 @@ write.table(datasetByIDandBlockRestrictiveOutlier,file="output\\datasetGroupedRe
 
 combineImages(c("figs/restrictiveOutliers.png","figs/MR/LinePlotAttempts.png","figs/MR/LinePlotAttemptedAcc.png","figs/MR/LinePlotScoringSystem.png"),2,2,"figs/MR/combined.png")
 
+getCohensD=function(testdata,nStim,typ,sdCalculated=FALSE){
+  meanM=mean(testdata$acc[which(testdata$nStimuli==nStim & testdata$sex=="male" & testdata$typeOfAlternatives==typ)],na.rm=T)
+  meanF=mean(testdata$acc[which(testdata$nStimuli==nStim & testdata$sex=="female" & testdata$typeOfAlternatives==typ)],na.rm=T)
+  if(sdCalculated){
+    sdM=testdata$accSd[which(testdata$nStimuli==nStim & testdata$sex=="male" & testdata$typeOfAlternatives==typ)]
+    sdF=testdata$accSd[which(testdata$nStimuli==nStim & testdata$sex=="female" & testdata$typeOfAlternatives==typ)]
+  } else {
+    sdM=sd(testdata$acc[which(testdata$nStimuli==nStim & testdata$sex=="male" & testdata$typeOfAlternatives==typ)],na.rm=T)
+    sdF=sd(testdata$acc[which(testdata$nStimuli==nStim & testdata$sex=="female" & testdata$typeOfAlternatives==typ)],na.rm=T)
+  }
+  return((meanM-meanF)/(sqrt((sdM^2+sdF^2)/2)))
+}
+getCohensD(datasetByIDandBlock,2,"paired")
+getCohensD(datasetByIDandBlock,2,"mixed")
+getCohensD(datasetByIDandBlock,8,"paired")
+getCohensD(datasetByIDandBlock,8,"mixed")
