@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/288438147.svg)](https://zenodo.org/badge/latestdoi/288438147)
+
 # MCMR
 Repository for multiple choice mental rotation tests
 
